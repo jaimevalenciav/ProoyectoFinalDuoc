@@ -13,6 +13,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { OperacionesService } from '@core/services/operaciones.service';
 import { VehiculosService } from '@core/services/vehiculos.service';
 import { ConductoresService } from '@core/services/conductores.service';
+import { DialogoService } from '@core/services/dialogo.service';
 import { Servicio, Vehiculo, Conductor, Cliente, TipoServicio } from '@core/models';
 
 @Component({
@@ -432,6 +433,7 @@ export class ServiciosComponent implements OnInit {
   private readonly svcConductores    = inject(ConductoresService);
   private readonly fb                = inject(FormBuilder);
   private readonly snack             = inject(MatSnackBar);
+  private readonly dialogo           = inject(DialogoService);
 
   columnas          = ['numero', 'cliente', 'tipoServicio', 'origen', 'asignacion', 'fecha', 'estado', 'valorTotal', 'acciones'];
   cargando          = signal(true);
@@ -595,8 +597,13 @@ export class ServiciosComponent implements OnInit {
     this.ejecutarAccion(s.id, this.svcOperaciones.completarServicio(s.id), 'Viaje completado');
   }
 
-  cancelar(s: Servicio) {
-    if (!confirm(`¿Cancelar la solicitud ${s.numServicio}?`)) return;
+  async cancelar(s: Servicio) {
+    const ok = await this.dialogo.confirmar(
+      `¿Cancelar la solicitud ${s.numServicio}?`,
+      `${s.origen} → ${s.destino}`,
+      'Sí, cancelar'
+    );
+    if (!ok) return;
     this.ejecutarAccion(s.id, this.svcOperaciones.cancelarServicio(s.id), 'Servicio cancelado');
   }
 
@@ -617,8 +624,12 @@ export class ServiciosComponent implements OnInit {
 
   // ── Eliminar ───────────────────────────────────────────────
 
-  eliminar(s: Servicio) {
-    if (!confirm(`¿Eliminar la solicitud ${s.numServicio}?`)) return;
+  async eliminar(s: Servicio) {
+    const ok = await this.dialogo.confirmarEliminar(
+      `¿Eliminar la solicitud ${s.numServicio}?`,
+      `${s.origen} → ${s.destino}`
+    );
+    if (!ok) return;
     this.svcOperaciones.deleteServicio(s.id).subscribe({ next: () => this.cargar() });
   }
 

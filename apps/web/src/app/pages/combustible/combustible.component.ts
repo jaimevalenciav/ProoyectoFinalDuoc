@@ -12,6 +12,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MsalService } from '@azure/msal-angular';
 import { OperacionesService } from '@core/services/operaciones.service';
 import { VehiculosService } from '@core/services/vehiculos.service';
+import { DialogoService } from '@core/services/dialogo.service';
 import { AlertaCombustible, CargaCombustible, Vehiculo } from '@core/models';
 
 interface AlertaFormulario {
@@ -523,6 +524,7 @@ export class CombustibleComponent implements OnInit {
   private readonly msalSvc      = inject(MsalService);
   private readonly fb           = inject(FormBuilder);
   private readonly snack        = inject(MatSnackBar);
+  private readonly dialogo      = inject(DialogoService);
 
   columnas = ['numDocumento', 'fechaCarga', 'vehiculo', 'litros', 'precioLitro', 'costoTotal', 'kmVehiculo', 'rendimiento', 'acciones'];
 
@@ -753,8 +755,12 @@ export class CombustibleComponent implements OnInit {
     });
   }
 
-  eliminar(c: CargaCombustible) {
-    if (!confirm(`¿Eliminar carga del ${new Date(c.fechaCarga).toLocaleDateString('es-CL')}?`)) return;
+  async eliminar(c: CargaCombustible) {
+    const ok = await this.dialogo.confirmarEliminar(
+      `¿Eliminar carga del ${new Date(c.fechaCarga).toLocaleDateString('es-CL')}?`,
+      `Vehículo: ${this.patenteVehiculo(c.vehiculoId)} · ${c.litros} L · ${c.proveedor}`
+    );
+    if (!ok) return;
     this.svc.eliminarCarga(c.id).subscribe({ next: () => this.cargar() });
   }
 

@@ -9,6 +9,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { OperacionesService } from '@core/services/operaciones.service';
+import { DialogoService } from '@core/services/dialogo.service';
 import { Cliente } from '@core/models';
 
 @Component({
@@ -176,6 +177,7 @@ export class ClientesComponent implements OnInit {
   private readonly servicio     = inject(OperacionesService);
   private readonly constructor_ = inject(FormBuilder);
   private readonly notificacion = inject(MatSnackBar);
+  private readonly dialogo      = inject(DialogoService);
 
   columnas          = ['rut', 'razonSocial', 'repLegalNombre', 'email', 'telefono', 'acciones'];
   cargando          = signal(true);
@@ -242,8 +244,12 @@ export class ClientesComponent implements OnInit {
     );
   }
 
-  eliminar(c: Cliente) {
-    if (!confirm(`¿Eliminar el cliente ${c.razonSocial}?`)) return;
+  async eliminar(c: Cliente) {
+    const ok = await this.dialogo.confirmarEliminar(
+      `¿Eliminar cliente ${c.razonSocial}?`,
+      `RUT: ${c.rut}`
+    );
+    if (!ok) return;
     this.servicio.deleteCliente(c.id).subscribe({ next: () => this.cargar() });
   }
 }

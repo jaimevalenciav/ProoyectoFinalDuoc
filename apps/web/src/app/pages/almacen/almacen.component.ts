@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AlmacenService, AjusteStockDto } from '@core/services/almacen.service';
+import { DialogoService } from '@core/services/dialogo.service';
 import { Repuesto } from '@core/models';
 
 @Component({
@@ -200,6 +201,7 @@ export class AlmacenComponent implements OnInit {
   private readonly servicio     = inject(AlmacenService);
   private readonly fb           = inject(FormBuilder);
   private readonly notificacion = inject(MatSnackBar);
+  private readonly dialogo      = inject(DialogoService);
 
   columnas          = ['codigo', 'descripcion', 'categoria', 'stockActual', 'stockMinimo', 'precioUnitario', 'acciones'];
   cargando          = signal(true);
@@ -301,8 +303,12 @@ export class AlmacenComponent implements OnInit {
     });
   }
 
-  eliminar(r: Repuesto) {
-    if (!confirm(`¿Eliminar el repuesto "${r.descripcion}"?`)) return;
+  async eliminar(r: Repuesto) {
+    const ok = await this.dialogo.confirmarEliminar(
+      `¿Eliminar repuesto "${r.descripcion}"?`,
+      `Código: ${r.codigo} · Stock actual: ${r.stockActual} ${r.unidad}`
+    );
+    if (!ok) return;
     this.servicio.delete(r.id).subscribe({ next: () => this.cargar() });
   }
 

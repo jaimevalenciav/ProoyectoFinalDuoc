@@ -8,6 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ConductoresService } from '@core/services/conductores.service';
+import { DialogoService } from '@core/services/dialogo.service';
 import { Conductor } from '@core/models';
 
 @Component({
@@ -170,6 +171,7 @@ export class ConductoresComponent implements OnInit {
   private readonly servicio     = inject(ConductoresService);
   private readonly constructor_ = inject(FormBuilder);
   private readonly notificacion = inject(MatSnackBar);
+  private readonly dialogo      = inject(DialogoService);
 
   cargando          = signal(true);
   guardando         = signal(false);
@@ -227,8 +229,12 @@ export class ConductoresComponent implements OnInit {
     });
   }
 
-  eliminar(c: Conductor) {
-    if (!confirm(`¿Eliminar conductor ${c.nombre}?`)) return;
+  async eliminar(c: Conductor) {
+    const ok = await this.dialogo.confirmarEliminar(
+      `¿Eliminar conductor ${c.nombre}?`,
+      'Esta acción no se puede deshacer.'
+    );
+    if (!ok) return;
     this.servicio.delete(c.id).subscribe({ next: () => this.cargar() });
   }
 

@@ -15,6 +15,7 @@ import { forkJoin } from 'rxjs';
 import { VehiculosService } from '@core/services/vehiculos.service';
 import { VehiculosMaestrosService } from '@core/services/vehiculos-maestros.service';
 import { TallerService } from '@core/services/taller.service';
+import { DialogoService } from '@core/services/dialogo.service';
 import {
   Vehiculo, Sucursal, Municipalidad, Aseguradora, PlantaRevision,
   PermisoCirculacion, SeguroSoap, RevisionTecnica, OrdenTrabajo
@@ -789,6 +790,7 @@ export class VehiculosComponent implements OnInit {
   private readonly constructor_  = inject(FormBuilder);
   private readonly notificacion  = inject(MatSnackBar);
   private readonly dialog        = inject(MatDialog);
+  private readonly dialogo       = inject(DialogoService);
 
   columnas = ['patente', 'marcaModelo', 'tipo', 'estado', 'kilometraje', 'vencimientos', 'acciones'];
   colsPermiso  = ['vigente', 'municipalidad', 'fechaPago', 'valor', 'vencimiento', 'doc', 'acc'];
@@ -980,8 +982,9 @@ export class VehiculosComponent implements OnInit {
     });
   }
 
-  eliminarPermiso(p: PermisoCirculacion) {
-    if (!confirm('¿Eliminar este registro de permiso?')) return;
+  async eliminarPermiso(p: PermisoCirculacion) {
+    const ok = await this.dialogo.confirmarEliminar('¿Eliminar este permiso de circulación?');
+    if (!ok) return;
     this.maestrosSvc.deletePermisoCirculacion(p.id).subscribe({
       next: () => this.permisosCirculacion.update(l => l.filter(x => x.id !== p.id)),
     });
@@ -1003,8 +1006,9 @@ export class VehiculosComponent implements OnInit {
     });
   }
 
-  eliminarSeguro(s: SeguroSoap) {
-    if (!confirm('¿Eliminar este registro de seguro?')) return;
+  async eliminarSeguro(s: SeguroSoap) {
+    const ok = await this.dialogo.confirmarEliminar('¿Eliminar este registro de seguro SOAP?');
+    if (!ok) return;
     this.maestrosSvc.deleteSeguroSOAP(s.id).subscribe({
       next: () => this.segurosSOAP.update(l => l.filter(x => x.id !== s.id)),
     });
@@ -1026,8 +1030,9 @@ export class VehiculosComponent implements OnInit {
     });
   }
 
-  eliminarRevision(r: RevisionTecnica) {
-    if (!confirm('¿Eliminar este registro de revisión técnica?')) return;
+  async eliminarRevision(r: RevisionTecnica) {
+    const ok = await this.dialogo.confirmarEliminar('¿Eliminar este registro de revisión técnica?');
+    if (!ok) return;
     this.maestrosSvc.deleteRevisionTecnica(r.id).subscribe({
       next: () => this.revisionesTecnicas.update(l => l.filter(x => x.id !== r.id)),
     });
@@ -1041,8 +1046,12 @@ export class VehiculosComponent implements OnInit {
     });
   }
 
-  eliminar(v: Vehiculo) {
-    if (!confirm(`¿Eliminar el vehículo ${v.patente}?`)) return;
+  async eliminar(v: Vehiculo) {
+    const ok = await this.dialogo.confirmarEliminar(
+      `¿Eliminar el vehículo ${v.patente}?`,
+      `${v.marca} ${v.modelo} · ${v.anio}`
+    );
+    if (!ok) return;
     this.servicio.delete(v.id).subscribe({ next: () => this.cargar() });
   }
 

@@ -11,6 +11,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { OperacionesService } from '@core/services/operaciones.service';
 import { VehiculosService } from '@core/services/vehiculos.service';
+import { DialogoService } from '@core/services/dialogo.service';
 import { CargaAdBlue, Vehiculo } from '@core/models';
 
 @Component({
@@ -386,6 +387,7 @@ export class AdBlueComponent implements OnInit {
   private readonly svcVehiculos = inject(VehiculosService);
   private readonly fb           = inject(FormBuilder);
   private readonly snack        = inject(MatSnackBar);
+  private readonly dialogo      = inject(DialogoService);
 
   columnas = ['numDocumento', 'fechaCarga', 'vehiculo', 'litros', 'precioLitro', 'costoTotal', 'kmVehiculo', 'pctDiesel', 'acciones'];
 
@@ -497,8 +499,12 @@ export class AdBlueComponent implements OnInit {
     });
   }
 
-  eliminar(c: CargaAdBlue) {
-    if (!confirm(`¿Eliminar recarga del ${new Date(c.fechaCarga).toLocaleDateString('es-CL')}?`)) return;
+  async eliminar(c: CargaAdBlue) {
+    const ok = await this.dialogo.confirmarEliminar(
+      `¿Eliminar recarga del ${new Date(c.fechaCarga).toLocaleDateString('es-CL')}?`,
+      `Vehículo: ${this.patenteVehiculo(c.vehiculoId)} · ${c.litros} L · ${c.proveedor}`
+    );
+    if (!ok) return;
     this.svc.eliminarCargaAdBlue(c.id).subscribe({ next: () => this.cargar() });
   }
 

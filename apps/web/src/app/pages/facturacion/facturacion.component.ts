@@ -16,6 +16,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatChipsModule } from '@angular/material/chips';
 import { OperacionesService } from '@core/services/operaciones.service';
 import { FacturacionService } from '@core/services/facturacion.service';
+import { DialogoService } from '@core/services/dialogo.service';
 import { Servicio, Cliente, Factura } from '@core/models';
 
 @Component({
@@ -470,6 +471,7 @@ export class FacturacionComponent implements OnInit {
   private readonly operacionesSvc = inject(OperacionesService);
   private readonly facturacionSvc = inject(FacturacionService);
   private readonly snack           = inject(MatSnackBar);
+  private readonly dialogo         = inject(DialogoService);
 
   // ── Estado ─────────────────────────────────────────────────
   pestanaActiva        = signal<'servicios' | 'facturas'>('servicios');
@@ -640,8 +642,12 @@ export class FacturacionComponent implements OnInit {
   }
 
   // ── Anular factura ────────────────────────────────────────
-  anularFactura(f: Factura) {
-    if (!confirm(`¿Anular la factura ${f.numFactura}? Esta acción liberará los servicios asociados.`)) return;
+  async anularFactura(f: Factura) {
+    const ok = await this.dialogo.confirmarCritico(
+      `¿Anular la factura ${f.numFactura}?`,
+      'Esta acción <strong>liberará los servicios asociados</strong> y no se puede deshacer.'
+    );
+    if (!ok) return;
     this.facturacionSvc.anular(f.id).subscribe({
       next: () => {
         this.snack.open('Factura anulada. Los servicios han sido liberados.', '', { duration: 4000 });

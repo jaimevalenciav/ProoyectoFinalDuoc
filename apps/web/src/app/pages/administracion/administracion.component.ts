@@ -14,6 +14,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { AlmacenService } from '@core/services/almacen.service';
 import { TareasDefinicionService } from '@core/services/tareas-definicion.service';
 import { VehiculosMaestrosService } from '@core/services/vehiculos-maestros.service';
+import { DialogoService } from '@core/services/dialogo.service';
 import { Repuesto, TareaDefinicion, Sucursal, Municipalidad, Aseguradora, PlantaRevision } from '@core/models';
 
 @Component({
@@ -701,6 +702,7 @@ export class AdministracionComponent implements OnInit {
   private readonly maestrosSvc = inject(VehiculosMaestrosService);
   private readonly snack       = inject(MatSnackBar);
   private readonly fb          = inject(FormBuilder);
+  private readonly dialogo     = inject(DialogoService);
 
   // ── Repuestos ─────────────────────────────────────────────────
   repuestos    = signal<Repuesto[]>([]);
@@ -832,8 +834,9 @@ export class AdministracionComponent implements OnInit {
     });
   }
 
-  eliminarRepuesto(r: Repuesto) {
-    if (!confirm(`¿Eliminar ${r.descripcion}?`)) return;
+  async eliminarRepuesto(r: Repuesto) {
+    const ok = await this.dialogo.confirmarEliminar(`¿Eliminar repuesto "${r.descripcion}"?`, `Código: ${r.codigo}`);
+    if (!ok) return;
     this.almacenSvc.delete(r.id).subscribe({ next: () => this.cargarRepuestos() });
   }
 
@@ -888,8 +891,9 @@ export class AdministracionComponent implements OnInit {
     });
   }
 
-  eliminarTarea(td: TareaDefinicion) {
-    if (!confirm(`¿Eliminar tarea "${td.nombre}"?`)) return;
+  async eliminarTarea(td: TareaDefinicion) {
+    const ok = await this.dialogo.confirmarEliminar(`¿Eliminar tarea "${td.nombre}"?`);
+    if (!ok) return;
     this.tareasSvc.delete(td.id).subscribe({ next: () => this.cargarTareas() });
   }
 
@@ -923,8 +927,9 @@ export class AdministracionComponent implements OnInit {
     });
   }
 
-  eliminarSucursal(r: Sucursal) {
-    if (!confirm(`¿Eliminar sucursal "${r.nombre}"?`)) return;
+  async eliminarSucursal(r: Sucursal) {
+    const ok = await this.dialogo.confirmarEliminar(`¿Eliminar sucursal "${r.nombre}"?`);
+    if (!ok) return;
     this.maestrosSvc.deleteSucursal(r.id).subscribe({ next: () => this.cargarSucursales() });
   }
 
@@ -958,8 +963,9 @@ export class AdministracionComponent implements OnInit {
     });
   }
 
-  eliminarMunicipalidad(r: Municipalidad) {
-    if (!confirm(`¿Eliminar municipalidad "${r.nombre}"?`)) return;
+  async eliminarMunicipalidad(r: Municipalidad) {
+    const ok = await this.dialogo.confirmarEliminar(`¿Eliminar municipalidad "${r.nombre}"?`);
+    if (!ok) return;
     this.maestrosSvc.deleteMunicipalidad(r.id).subscribe({ next: () => this.cargarMunicipalidades() });
   }
 
@@ -993,8 +999,9 @@ export class AdministracionComponent implements OnInit {
     });
   }
 
-  eliminarAseguradora(r: Aseguradora) {
-    if (!confirm(`¿Eliminar aseguradora "${r.nombre}"?`)) return;
+  async eliminarAseguradora(r: Aseguradora) {
+    const ok = await this.dialogo.confirmarEliminar(`¿Eliminar aseguradora "${r.nombre}"?`);
+    if (!ok) return;
     this.maestrosSvc.deleteAseguradora(r.id).subscribe({ next: () => this.cargarAseguradoras() });
   }
 
@@ -1028,8 +1035,9 @@ export class AdministracionComponent implements OnInit {
     });
   }
 
-  eliminarPlanta(r: PlantaRevision) {
-    if (!confirm(`¿Eliminar planta "${r.nombre}"?`)) return;
+  async eliminarPlanta(r: PlantaRevision) {
+    const ok = await this.dialogo.confirmarEliminar(`¿Eliminar planta "${r.nombre}"?`);
+    if (!ok) return;
     this.maestrosSvc.deletePlantaRevision(r.id).subscribe({ next: () => this.cargarPlantas() });
   }
 }

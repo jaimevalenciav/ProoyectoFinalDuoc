@@ -15,6 +15,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { TallerService } from '@core/services/taller.service';
 import { VehiculosService } from '@core/services/vehiculos.service';
 import { TareasDefinicionService } from '@core/services/tareas-definicion.service';
+import { DialogoService } from '@core/services/dialogo.service';
 import { OrdenTrabajo, Vehiculo, TareaDefinicion } from '@core/models';
 import { TallerOtDialogComponent } from './taller-ot-dialog.component';
 
@@ -299,6 +300,7 @@ export class TallerComponent implements OnInit {
   private readonly fb        = inject(FormBuilder);
   private readonly snack     = inject(MatSnackBar);
   private readonly dialog    = inject(MatDialog);
+  private readonly dialogo   = inject(DialogoService);
 
   ordenes           = signal<OrdenTrabajo[]>([]);
   vehiculos         = signal<Vehiculo[]>([]);
@@ -385,8 +387,11 @@ export class TallerComponent implements OnInit {
     this.tareaDefSeleccionada = null;
   }
 
-  confirmarEliminar(ot: OrdenTrabajo) {
-    const ok = window.confirm(`¿Eliminar la OT ${ot.numero}? Esta acción no se puede deshacer.`);
+  async confirmarEliminar(ot: OrdenTrabajo) {
+    const ok = await this.dialogo.confirmarEliminar(
+      `¿Eliminar la OT ${ot.numero}?`,
+      `${ot.tipo} · ${ot.descripcion?.slice(0, 60) ?? ''}`
+    );
     if (!ok) return;
     this.eliminando.set(ot.id);
     this.svc.delete(ot.id).subscribe({
