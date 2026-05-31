@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { forkJoin } from 'rxjs';
 import { VehiculosService } from '@core/services/vehiculos.service';
 import { VehiculosMaestrosService } from '@core/services/vehiculos-maestros.service';
@@ -28,6 +29,7 @@ import { VehiculoQrPrintComponent } from './vehiculo-qr-print.component';
     MatTableModule, MatButtonModule, MatIconModule,
     MatInputModule, MatSelectModule, MatProgressSpinnerModule,
     MatSnackBarModule, MatDialogModule, MatTooltipModule,
+    MatSlideToggleModule,
   ],
   template: `
     <div class="encabezado-pagina">
@@ -238,6 +240,16 @@ import { VehiculoQrPrintComponent } from './vehiculo-qr-print.component';
                   </mat-select>
                 </mat-form-field>
                 <mat-form-field appearance="fill">
+                  <mat-label>Norma Euro</mat-label>
+                  <mat-select formControlName="normaEuro">
+                    <mat-option value="">Sin especificar</mat-option>
+                    <mat-option value="EURO_III">Euro III</mat-option>
+                    <mat-option value="EURO_IV">Euro IV</mat-option>
+                    <mat-option value="EURO_V">Euro V</mat-option>
+                    <mat-option value="EURO_VI">Euro VI</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="fill">
                   <mat-label>Color</mat-label>
                   <input matInput formControlName="color" />
                 </mat-form-field>
@@ -245,6 +257,17 @@ import { VehiculoQrPrintComponent } from './vehiculo-qr-print.component';
                   <mat-label>Nº Motor</mat-label>
                   <input matInput formControlName="numMotor" />
                 </mat-form-field>
+              </div>
+              <!-- AdBlue toggle — visible para todos; relevante para Diésel + Euro V/VI -->
+              <div class="adblue-toggle-row">
+                <mat-slide-toggle formControlName="usaAdBlue" color="primary">
+                  Usa AdBlue (sistema SCR / reductor de emisiones NOx)
+                </mat-slide-toggle>
+                @if (formulario.value.usaAdBlue) {
+                  <span class="adblue-badge"><mat-icon>opacity</mat-icon> AdBlue habilitado — se podrán registrar recargas en el módulo Operaciones</span>
+                }
+              </div>
+              <div class="grid-4" style="margin-top:8px">
                 <mat-form-field appearance="fill">
                   <mat-label>Nº Chasis</mat-label>
                   <input matInput formControlName="numChasis" />
@@ -718,6 +741,18 @@ import { VehiculoQrPrintComponent } from './vehiculo-qr-print.component';
     }
     .etq-dato { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--azul-400); }
 
+    /* AdBlue toggle */
+    .adblue-toggle-row {
+      display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+      background: var(--azul-50); border: 1px solid var(--azul-200);
+      border-radius: var(--radio-sm); padding: 10px 14px; margin-top: 10px;
+    }
+    .adblue-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 12px; font-weight: 600; color: #007AF5;
+      mat-icon { font-size: 15px; width: 15px; height: 15px; }
+    }
+
     /* Documentos legales */
     .seccion-doc {
       border: 1px solid var(--color-borde);
@@ -817,6 +852,8 @@ export class VehiculosComponent implements OnInit {
     capacidadCargaKg:  [null as number | null],
     valorCompra:       [null as number | null],
     fechaCompra:       [''],
+    usaAdBlue:         [false],
+    normaEuro:         [''],
   });
 
   // Antigüedad calculada
@@ -872,6 +909,8 @@ export class VehiculosComponent implements OnInit {
         ...v,
         fechaCompra: v.fechaCompra ? v.fechaCompra.substring(0, 10) : '',
         sucursalId:  v.sucursalId ?? '',
+        usaAdBlue:   !!v.usaAdBlue,
+        normaEuro:   v.normaEuro ?? '',
       } as any);
       // Cargar documentos del vehículo
       this.permisosCirculacion.set([]); this.segurosSOAP.set([]); this.revisionesTecnicas.set([]); this.historialTaller.set([]);
@@ -894,6 +933,7 @@ export class VehiculosComponent implements OnInit {
       this.formulario.reset({
         anio: new Date().getFullYear(), tipo: 'CAMION', condicion: 'USADO',
         estadoOperacion: 'EN_OPERACION', combustible: 'DIESEL', kmActuales: 0,
+        usaAdBlue: false, normaEuro: '',
       });
       this.permisosCirculacion.set([]); this.segurosSOAP.set([]); this.revisionesTecnicas.set([]); this.historialTaller.set([]);
     }
@@ -905,7 +945,8 @@ export class VehiculosComponent implements OnInit {
   guardar() {
     if (this.formulario.invalid) return;
     this.guardando.set(true);
-    const solicitud = this.formulario.value as any;
+    const v = this.formulario.value as any;
+    const solicitud = { ...v, usaAdBlue: v.usaAdBlue ? 1 : 0 };
     const operacion = this.idEdicion()
       ? this.servicio.update(this.idEdicion()!, solicitud)
       : this.servicio.create(solicitud);

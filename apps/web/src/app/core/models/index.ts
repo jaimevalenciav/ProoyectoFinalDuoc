@@ -343,6 +343,26 @@ export interface CargaCombustible {
   createdAt: string;
 }
 
+// ─── Carga AdBlue ────────────────────────────────────────────
+export interface CargaAdBlue {
+  id: string;
+  empresaId: string;
+  vehiculoId: string;
+  vehiculoPatente?: string;
+  conductorId?: string;
+  conductorNombre?: string;
+  numDocumento?: string;
+  proveedor: string;
+  estacion?: string;
+  fechaCarga: string;
+  litros: number;
+  precioLitro: number;
+  costoTotal: number;
+  kmVehiculo: number;
+  pctDiesel?: number;
+  createdAt: string;
+}
+
 // ─── Alerta Combustible ──────────────────────────────────────
 export interface AlertaCombustible {
   id: string;

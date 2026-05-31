@@ -41,6 +41,10 @@ export const routes: Routes = [
         loadComponent: () => import('@pages/combustible/combustible.component').then(m => m.CombustibleComponent),
       },
       {
+        path: 'adblue',
+        loadComponent: () => import('@pages/adblue/adblue.component').then(m => m.AdBlueComponent),
+      },
+      {
         path: 'servicios',
         loadComponent: () => import('@pages/servicios/servicios.component').then(m => m.ServiciosComponent),
       },

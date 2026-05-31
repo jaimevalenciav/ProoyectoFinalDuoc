@@ -250,6 +250,7 @@ export class ShellComponent {
     { etiqueta: 'Taller',       icono: 'build',             ruta: 'taller' },
     { etiqueta: 'Almacén',      icono: 'inventory_2',       ruta: 'almacen' },
     { etiqueta: 'Combustible',  icono: 'local_gas_station', ruta: 'combustible' },
+    { etiqueta: 'AdBlue',       icono: 'opacity',           ruta: 'adblue' },
     { etiqueta: 'Servicios',    icono: 'local_shipping',    ruta: 'servicios' },
     { etiqueta: 'Clientes',     icono: 'people',            ruta: 'clientes' },
     { etiqueta: 'Facturación',  icono: 'receipt',           ruta: 'facturacion' },
@@ -263,14 +264,14 @@ export class ShellComponent {
   private readonly mapaIconos: Record<string, string> = {
     dashboard: 'dashboard', gps: 'map', vehiculos: 'directions_bus',
     conductores: 'badge', taller: 'build', almacen: 'inventory_2',
-    combustible: 'local_gas_station', servicios: 'local_shipping',
+    combustible: 'local_gas_station', adblue: 'opacity', servicios: 'local_shipping',
     clientes: 'people', facturacion: 'receipt', reportes: 'bar_chart',
     administracion: 'admin_panel_settings',
   };
   private readonly mapaEtiquetas: Record<string, string> = {
     dashboard: 'Dashboard', gps: 'GPS / Mapa', vehiculos: 'Vehículos',
     conductores: 'Conductores', taller: 'Taller', almacen: 'Almacén',
-    combustible: 'Combustible', servicios: 'Servicios',
+    combustible: 'Combustible', adblue: 'AdBlue', servicios: 'Servicios',
     clientes: 'Clientes', facturacion: 'Facturación', reportes: 'Reportes',
     administracion: 'Administración',
   };

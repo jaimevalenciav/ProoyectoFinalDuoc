@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
-import { AlertaCombustible, CargaCombustible, Servicio, ServicioRequest, Cliente, ClienteRequest, TipoServicio, PagedResponse } from '../models';
+import { AlertaCombustible, CargaAdBlue, CargaCombustible, Servicio, ServicioRequest, Cliente, ClienteRequest, TipoServicio, PagedResponse } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class OperacionesService {
@@ -147,5 +147,30 @@ export class OperacionesService {
     if (desde) p = p.set('desde', desde);
     if (hasta) p = p.set('hasta', hasta);
     return this.http.get<any>(`${this.urlBase}/clientes/${id}/facturacion`, { params: p });
+  }
+
+  // ── AdBlue ────────────────────────────────────────────────
+  getCargasAdBlue(params?: { vehiculoId?: string; desde?: string; hasta?: string }): Observable<PagedResponse<CargaAdBlue>> {
+    let p = new HttpParams();
+    if (params?.vehiculoId) p = p.set('vehiculoId', params.vehiculoId);
+    if (params?.desde)      p = p.set('desde', params.desde);
+    if (params?.hasta)      p = p.set('hasta', params.hasta);
+    return this.http.get<PagedResponse<CargaAdBlue>>(`${this.urlBase}/adblue/cargas`, { params: p });
+  }
+
+  registrarCargaAdBlue(req: Partial<CargaAdBlue>): Observable<CargaAdBlue> {
+    return this.http.post<CargaAdBlue>(`${this.urlBase}/adblue/cargas`, req);
+  }
+
+  eliminarCargaAdBlue(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.urlBase}/adblue/cargas/${id}`);
+  }
+
+  getUltimaCargaAdBlueVehiculo(vehiculoId: string): Observable<CargaAdBlue | null> {
+    return this.http.get<CargaAdBlue | null>(`${this.urlBase}/adblue/ultima-carga/${vehiculoId}`);
+  }
+
+  getAnomaliasAdBlue(): Observable<CargaAdBlue[]> {
+    return this.http.get<CargaAdBlue[]>(`${this.urlBase}/adblue/anomalias`);
   }
 }
