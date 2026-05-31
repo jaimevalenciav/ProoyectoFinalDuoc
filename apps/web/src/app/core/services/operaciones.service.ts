@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
-import { CargaCombustible, Servicio, ServicioRequest, Cliente, ClienteRequest, TipoServicio, PagedResponse } from '../models';
+import { AlertaCombustible, CargaCombustible, Servicio, ServicioRequest, Cliente, ClienteRequest, TipoServicio, PagedResponse } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class OperacionesService {
@@ -78,6 +78,22 @@ export class OperacionesService {
 
   getUltimaCargaVehiculo(vehiculoId: string): Observable<CargaCombustible | null> {
     return this.http.get<CargaCombustible | null>(`${this.urlBase}/combustible/ultima-carga/${vehiculoId}`);
+  }
+
+  // ── Alertas Combustible ───────────────────────────────────
+  /** activas=true → no leídas; activas=false → historial; omitido → todas */
+  getAlertasCombustible(activas?: boolean): Observable<AlertaCombustible[]> {
+    let p = new HttpParams();
+    if (activas !== undefined) p = p.set('activas', String(activas));
+    return this.http.get<AlertaCombustible[]>(`${this.urlBase}/combustible/alertas`, { params: p });
+  }
+
+  guardarAlertasCombustible(alertas: Partial<AlertaCombustible>[]): Observable<void> {
+    return this.http.post<void>(`${this.urlBase}/combustible/alertas`, alertas);
+  }
+
+  marcarAlertaLeida(id: string, leidaPor: string): Observable<AlertaCombustible> {
+    return this.http.patch<AlertaCombustible>(`${this.urlBase}/combustible/alertas/${id}/leida`, { leidaPor });
   }
 
   aprobarServicio(id: string): Observable<Servicio> {

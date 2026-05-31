@@ -341,6 +341,21 @@ export interface CargaCombustible {
   createdAt: string;
 }
 
+// ─── Alerta Combustible ──────────────────────────────────────
+export interface AlertaCombustible {
+  id: string;
+  empresaId: string;
+  cargaId: string;
+  vehiculoId: string;
+  tipo: 'error' | 'warning' | 'info';
+  icono?: string;
+  mensaje: string;
+  leida: number;         // 0 = activa, 1 = leída
+  leidaPor?: string;
+  leidaAt?: string;
+  createdAt: string;
+}
+
 // ─── Cliente ─────────────────────────────────────────────────
 export interface Cliente {
   id: string;

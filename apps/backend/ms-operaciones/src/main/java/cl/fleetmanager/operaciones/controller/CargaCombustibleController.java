@@ -1,9 +1,12 @@
 package cl.fleetmanager.operaciones.controller;
 
+import cl.fleetmanager.operaciones.dto.AlertaCombustibleDto;
 import cl.fleetmanager.operaciones.dto.CargaCombustibleDto;
+import cl.fleetmanager.operaciones.entity.AlertaCombustible;
 import cl.fleetmanager.operaciones.entity.CargaCombustible;
 import cl.fleetmanager.operaciones.entity.UsuarioSistema;
 import cl.fleetmanager.operaciones.repository.UsuarioRepository;
+import cl.fleetmanager.operaciones.service.AlertaCombustibleService;
 import cl.fleetmanager.operaciones.service.CargaCombustibleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -15,14 +18,16 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/combustible")
 @RequiredArgsConstructor
 public class CargaCombustibleController {
 
-    private final CargaCombustibleService servicio;
-    private final UsuarioRepository       usuarioRepo;
+    private final CargaCombustibleService  servicio;
+    private final AlertaCombustibleService alertaServicio;
+    private final UsuarioRepository        usuarioRepo;
 
     private String empresaId(Jwt jwt) {
         if (jwt == null) return "EMP-001";
@@ -74,5 +79,43 @@ public class CargaCombustibleController {
     @GetMapping("/anomalias")
     public List<CargaCombustible> anomalias(@AuthenticationPrincipal Jwt jwt) {
         return servicio.getAnomalias(empresaId(jwt));
+    }
+
+    // ── Alertas de combustible ────────────────────────────────────────────────
+
+    /**
+     * Guarda alertas generadas al registrar una carga.
+     * Body: lista de AlertaCombustibleDto (solo warning/info; los error bloquean el guardado).
+     */
+    @PostMapping("/alertas")
+    @ResponseStatus(HttpStatus.CREATED)
+    public void guardarAlertas(
+        @AuthenticationPrincipal Jwt jwt,
+        @RequestBody List<AlertaCombustibleDto> alertas
+    ) {
+        alertaServicio.guardar(empresaId(jwt), alertas);
+    }
+
+    /**
+     * Lista de alertas.
+     * @param activas true → solo activas (no leídas); false → solo historial; omitido → todas
+     */
+    @GetMapping("/alertas")
+    public List<AlertaCombustible> getAlertas(
+        @AuthenticationPrincipal Jwt jwt,
+        @RequestParam(required = false) Boolean activas
+    ) {
+        return alertaServicio.getAlertas(empresaId(jwt), activas);
+    }
+
+    /**
+     * Marca una alerta como leída. Body: { "leidaPor": "Nombre Usuario" }
+     */
+    @PatchMapping("/alertas/{id}/leida")
+    public AlertaCombustible marcarLeida(
+        @PathVariable String id,
+        @RequestBody Map<String, String> body
+    ) {
+        return alertaServicio.marcarLeida(id, body.get("leidaPor"));
     }
 }
