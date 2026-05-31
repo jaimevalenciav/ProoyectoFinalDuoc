@@ -75,6 +75,26 @@ public class Vehiculo {
     @Column(name = "CAPACIDAD_CARGA_KG")
     private Integer capacidadCargaKg;   // kg
 
+    /** NUEVO | USADO */
+    @Column(name = "CONDICION", length = 10)
+    private String condicion;
+
+    @Column(name = "VALOR_COMPRA")
+    private Long valorCompra;
+
+    @Column(name = "FECHA_COMPRA")
+    private java.time.LocalDate fechaCompra;
+
+    @Column(name = "PAIS_ORIGEN", length = 50)
+    private String paisOrigen;
+
+    /** EN_OPERACION | EN_MANTENCION | FUERA_SERVICIO | BAJA */
+    @Column(name = "ESTADO_OPERACION", length = 20)
+    private String estadoOperacion;
+
+    @Column(name = "SUCURSAL_ID", length = 36)
+    private String sucursalId;
+
     @Column(name = "ELIMINADO")
     private Integer eliminado;
 

@@ -24,4 +24,11 @@ public class VehiculoDto {
     Integer capacidadEstanque;
     Integer taraKg;
     Integer capacidadCargaKg;
+    // Nuevos campos
+    String condicion;
+    Long valorCompra;
+    java.time.LocalDate fechaCompra;
+    String paisOrigen;
+    String estadoOperacion;
+    String sucursalId;
 }

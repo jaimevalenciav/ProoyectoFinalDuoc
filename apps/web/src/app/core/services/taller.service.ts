@@ -9,11 +9,12 @@ export class TallerService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/ordenes-trabajo`;
 
-  getAll(params?: { estado?: string; tipo?: string; vehiculoId?: string }): Observable<PagedResponse<OrdenTrabajo>> {
+  getAll(params?: { estado?: string; tipo?: string; vehiculoId?: string; size?: number }): Observable<PagedResponse<OrdenTrabajo>> {
     let p = new HttpParams();
     if (params?.estado)     p = p.set('estado', params.estado);
     if (params?.tipo)       p = p.set('tipo', params.tipo);
     if (params?.vehiculoId) p = p.set('vehiculoId', params.vehiculoId);
+    if (params?.size)       p = p.set('size', String(params.size));
     return this.http.get<PagedResponse<OrdenTrabajo>>(this.base, { params: p });
   }
 

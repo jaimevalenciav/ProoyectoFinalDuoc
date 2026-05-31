@@ -60,3 +60,27 @@ spring:
         - id: reportes
           uri: http://${MS_REPORTES_HOST:localhost}:8087
           predicates: [Path=/api/v1/reportes/**]
+        - id: sucursales
+          uri: http://${MS_VEHICULOS_HOST:localhost}:8082
+          predicates: [Path=/api/v1/sucursales/**]
+        - id: municipalidades
+          uri: http://${MS_VEHICULOS_HOST:localhost}:8082
+          predicates: [Path=/api/v1/municipalidades/**]
+        - id: aseguradoras
+          uri: http://${MS_VEHICULOS_HOST:localhost}:8082
+          predicates: [Path=/api/v1/aseguradoras/**]
+        - id: plantas-revision
+          uri: http://${MS_VEHICULOS_HOST:localhost}:8082
+          predicates: [Path=/api/v1/plantas-revision/**]
+        - id: permisos-circulacion
+          uri: http://${MS_VEHICULOS_HOST:localhost}:8082
+          predicates: [Path=/api/v1/permisos-circulacion/**]
+        - id: seguros-soap
+          uri: http://${MS_VEHICULOS_HOST:localhost}:8082
+          predicates: [Path=/api/v1/seguros-soap/**]
+        - id: revisiones-tecnicas
+          uri: http://${MS_VEHICULOS_HOST:localhost}:8082
+          predicates: [Path=/api/v1/revisiones-tecnicas/**]
+        - id: tipos-servicio
+          uri: http://${MS_OPERACIONES_HOST:localhost}:8086
+          predicates: [Path=/api/v1/tipos-servicio/**]

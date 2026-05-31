@@ -10,9 +10,11 @@ import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { AlmacenService } from '@core/services/almacen.service';
 import { TareasDefinicionService } from '@core/services/tareas-definicion.service';
-import { Repuesto, TareaDefinicion } from '@core/models';
+import { VehiculosMaestrosService } from '@core/services/vehiculos-maestros.service';
+import { Repuesto, TareaDefinicion, Sucursal, Municipalidad, Aseguradora, PlantaRevision } from '@core/models';
 
 @Component({
   selector: 'app-administracion',
@@ -21,7 +23,7 @@ import { Repuesto, TareaDefinicion } from '@core/models';
     CommonModule, FormsModule, ReactiveFormsModule,
     MatTabsModule, MatButtonModule, MatIconModule, MatInputModule,
     MatSelectModule, MatTableModule, MatProgressSpinnerModule,
-    MatSnackBarModule, MatChipsModule,
+    MatSnackBarModule, MatChipsModule, MatSlideToggleModule,
   ],
   template: `
     <div class="encabezado-pagina">
@@ -166,6 +168,209 @@ import { Repuesto, TareaDefinicion } from '@core/models';
                 <div class="estado-vacio-tabla" style="grid-column:1/-1">
                   <mat-icon>assignment</mat-icon>
                   <p>No hay tareas definidas.</p>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </mat-tab>
+
+      <!-- ══════════ TAB: Sucursales ══════════ -->
+      <mat-tab label="Sucursales">
+        <div class="tab-contenido">
+          <div class="barra-acciones">
+            <span style="flex:1"></span>
+            <button class="btn-primary" (click)="abrirSucursal()">
+              <mat-icon>add</mat-icon> Nueva sucursal
+            </button>
+          </div>
+          @if (cargandoSuc()) {
+            <div class="spinner-centrado"><mat-spinner diameter="36" /></div>
+          } @else {
+            <div class="superficie" style="padding:0;overflow:hidden">
+              <table mat-table [dataSource]="sucursales()">
+                <ng-container matColumnDef="nombre">
+                  <th mat-header-cell *matHeaderCellDef>Nombre</th>
+                  <td mat-cell *matCellDef="let r">
+                    <div style="font-weight:500">{{ r.nombre }}</div>
+                    @if (r.ciudad) { <div style="font-size:11px;color:var(--ink-soft)">{{ r.ciudad }}</div> }
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="direccion">
+                  <th mat-header-cell *matHeaderCellDef>Dirección</th>
+                  <td mat-cell *matCellDef="let r">{{ r.direccion || '—' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="activa">
+                  <th mat-header-cell *matHeaderCellDef>Estado</th>
+                  <td mat-cell *matCellDef="let r">
+                    <span [class]="r.activa ? 'pill pill-activo' : 'pill pill-fuera'">
+                      {{ r.activa ? 'Activa' : 'Inactiva' }}
+                    </span>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="acciones">
+                  <th mat-header-cell *matHeaderCellDef></th>
+                  <td mat-cell *matCellDef="let r" style="white-space:nowrap">
+                    <button mat-icon-button (click)="abrirSucursal(r)" matTooltip="Editar"><mat-icon>edit</mat-icon></button>
+                    <button mat-icon-button color="warn" (click)="eliminarSucursal(r)" matTooltip="Eliminar"><mat-icon>delete_outline</mat-icon></button>
+                  </td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="colsSuc"></tr>
+                <tr mat-row *matRowDef="let r; columns: colsSuc;"></tr>
+              </table>
+              @if (sucursales().length === 0) {
+                <div class="estado-vacio-tabla">
+                  <mat-icon>store</mat-icon><p>No hay sucursales registradas.</p>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </mat-tab>
+
+      <!-- ══════════ TAB: Municipalidades ══════════ -->
+      <mat-tab label="Municipalidades">
+        <div class="tab-contenido">
+          <div class="barra-acciones">
+            <span style="flex:1"></span>
+            <button class="btn-primary" (click)="abrirMunicipalidad()">
+              <mat-icon>add</mat-icon> Nueva municipalidad
+            </button>
+          </div>
+          @if (cargandoMun()) {
+            <div class="spinner-centrado"><mat-spinner diameter="36" /></div>
+          } @else {
+            <div class="superficie" style="padding:0;overflow:hidden">
+              <table mat-table [dataSource]="municipalidades()">
+                <ng-container matColumnDef="nombre">
+                  <th mat-header-cell *matHeaderCellDef>Nombre</th>
+                  <td mat-cell *matCellDef="let r"><div style="font-weight:500">{{ r.nombre }}</div></td>
+                </ng-container>
+                <ng-container matColumnDef="region">
+                  <th mat-header-cell *matHeaderCellDef>Región</th>
+                  <td mat-cell *matCellDef="let r">{{ r.region || '—' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="activa">
+                  <th mat-header-cell *matHeaderCellDef>Estado</th>
+                  <td mat-cell *matCellDef="let r">
+                    <span [class]="r.activa ? 'pill pill-activo' : 'pill pill-fuera'">
+                      {{ r.activa ? 'Activa' : 'Inactiva' }}
+                    </span>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="acciones">
+                  <th mat-header-cell *matHeaderCellDef></th>
+                  <td mat-cell *matCellDef="let r" style="white-space:nowrap">
+                    <button mat-icon-button (click)="abrirMunicipalidad(r)" matTooltip="Editar"><mat-icon>edit</mat-icon></button>
+                    <button mat-icon-button color="warn" (click)="eliminarMunicipalidad(r)" matTooltip="Eliminar"><mat-icon>delete_outline</mat-icon></button>
+                  </td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="colsMun"></tr>
+                <tr mat-row *matRowDef="let r; columns: colsMun;"></tr>
+              </table>
+              @if (municipalidades().length === 0) {
+                <div class="estado-vacio-tabla">
+                  <mat-icon>location_city</mat-icon><p>No hay municipalidades registradas.</p>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </mat-tab>
+
+      <!-- ══════════ TAB: Aseguradoras ══════════ -->
+      <mat-tab label="Aseguradoras">
+        <div class="tab-contenido">
+          <div class="barra-acciones">
+            <span style="flex:1"></span>
+            <button class="btn-primary" (click)="abrirAseguradora()">
+              <mat-icon>add</mat-icon> Nueva aseguradora
+            </button>
+          </div>
+          @if (cargandoAseg()) {
+            <div class="spinner-centrado"><mat-spinner diameter="36" /></div>
+          } @else {
+            <div class="superficie" style="padding:0;overflow:hidden">
+              <table mat-table [dataSource]="aseguradoras()">
+                <ng-container matColumnDef="nombre">
+                  <th mat-header-cell *matHeaderCellDef>Nombre</th>
+                  <td mat-cell *matCellDef="let r"><div style="font-weight:500">{{ r.nombre }}</div></td>
+                </ng-container>
+                <ng-container matColumnDef="rut">
+                  <th mat-header-cell *matHeaderCellDef>RUT</th>
+                  <td mat-cell *matCellDef="let r">{{ r.rut || '—' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="activa">
+                  <th mat-header-cell *matHeaderCellDef>Estado</th>
+                  <td mat-cell *matCellDef="let r">
+                    <span [class]="r.activa ? 'pill pill-activo' : 'pill pill-fuera'">
+                      {{ r.activa ? 'Activa' : 'Inactiva' }}
+                    </span>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="acciones">
+                  <th mat-header-cell *matHeaderCellDef></th>
+                  <td mat-cell *matCellDef="let r" style="white-space:nowrap">
+                    <button mat-icon-button (click)="abrirAseguradora(r)" matTooltip="Editar"><mat-icon>edit</mat-icon></button>
+                    <button mat-icon-button color="warn" (click)="eliminarAseguradora(r)" matTooltip="Eliminar"><mat-icon>delete_outline</mat-icon></button>
+                  </td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="colsAseg"></tr>
+                <tr mat-row *matRowDef="let r; columns: colsAseg;"></tr>
+              </table>
+              @if (aseguradoras().length === 0) {
+                <div class="estado-vacio-tabla">
+                  <mat-icon>shield</mat-icon><p>No hay aseguradoras registradas.</p>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </mat-tab>
+
+      <!-- ══════════ TAB: Plantas Revisión Técnica ══════════ -->
+      <mat-tab label="Plantas Rev. Técnica">
+        <div class="tab-contenido">
+          <div class="barra-acciones">
+            <span style="flex:1"></span>
+            <button class="btn-primary" (click)="abrirPlanta()">
+              <mat-icon>add</mat-icon> Nueva planta
+            </button>
+          </div>
+          @if (cargandoPlanta()) {
+            <div class="spinner-centrado"><mat-spinner diameter="36" /></div>
+          } @else {
+            <div class="superficie" style="padding:0;overflow:hidden">
+              <table mat-table [dataSource]="plantas()">
+                <ng-container matColumnDef="nombre">
+                  <th mat-header-cell *matHeaderCellDef>Nombre</th>
+                  <td mat-cell *matCellDef="let r"><div style="font-weight:500">{{ r.nombre }}</div></td>
+                </ng-container>
+                <ng-container matColumnDef="direccion">
+                  <th mat-header-cell *matHeaderCellDef>Dirección</th>
+                  <td mat-cell *matCellDef="let r">{{ r.direccion || '—' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="activa">
+                  <th mat-header-cell *matHeaderCellDef>Estado</th>
+                  <td mat-cell *matCellDef="let r">
+                    <span [class]="r.activa ? 'pill pill-activo' : 'pill pill-fuera'">
+                      {{ r.activa ? 'Activa' : 'Inactiva' }}
+                    </span>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="acciones">
+                  <th mat-header-cell *matHeaderCellDef></th>
+                  <td mat-cell *matCellDef="let r" style="white-space:nowrap">
+                    <button mat-icon-button (click)="abrirPlanta(r)" matTooltip="Editar"><mat-icon>edit</mat-icon></button>
+                    <button mat-icon-button color="warn" (click)="eliminarPlanta(r)" matTooltip="Eliminar"><mat-icon>delete_outline</mat-icon></button>
+                  </td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="colsPlanta"></tr>
+                <tr mat-row *matRowDef="let r; columns: colsPlanta;"></tr>
+              </table>
+              @if (plantas().length === 0) {
+                <div class="estado-vacio-tabla">
+                  <mat-icon>directions_car</mat-icon><p>No hay plantas registradas.</p>
                 </div>
               }
             </div>
@@ -334,6 +539,134 @@ import { Repuesto, TareaDefinicion } from '@core/models';
         </div>
       </div>
     }
+
+    <!-- ══════════ MODAL: Sucursal ══════════ -->
+    @if (modalSuc()) {
+      <div class="capa-modal" (click)="cerrarSucursal()">
+        <div class="panel-modal" style="max-width:480px" (click)="$event.stopPropagation()">
+          <h2>{{ idSuc() ? 'Editar' : 'Nueva' }} sucursal</h2>
+          <form [formGroup]="formSuc" (ngSubmit)="guardarSucursal()">
+            <mat-form-field appearance="fill" class="ancho-completo">
+              <mat-label>Nombre</mat-label>
+              <input matInput formControlName="nombre" />
+            </mat-form-field>
+            <div class="dos-columnas">
+              <mat-form-field appearance="fill">
+                <mat-label>Ciudad</mat-label>
+                <input matInput formControlName="ciudad" />
+              </mat-form-field>
+              <mat-form-field appearance="fill">
+                <mat-label>Dirección</mat-label>
+                <input matInput formControlName="direccion" />
+              </mat-form-field>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;margin:8px 0 16px">
+              <mat-slide-toggle formControlName="activa">Activa</mat-slide-toggle>
+            </div>
+            <div class="acciones-formulario">
+              <button mat-button type="button" (click)="cerrarSucursal()">Cancelar</button>
+              <button mat-flat-button class="btn-principal" type="submit" [disabled]="formSuc.invalid || guardando()">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
+
+    <!-- ══════════ MODAL: Municipalidad ══════════ -->
+    @if (modalMun()) {
+      <div class="capa-modal" (click)="cerrarMunicipalidad()">
+        <div class="panel-modal" style="max-width:440px" (click)="$event.stopPropagation()">
+          <h2>{{ idMun() ? 'Editar' : 'Nueva' }} municipalidad</h2>
+          <form [formGroup]="formMun" (ngSubmit)="guardarMunicipalidad()">
+            <mat-form-field appearance="fill" class="ancho-completo">
+              <mat-label>Nombre</mat-label>
+              <input matInput formControlName="nombre" />
+            </mat-form-field>
+            <mat-form-field appearance="fill" class="ancho-completo">
+              <mat-label>Región</mat-label>
+              <mat-select formControlName="region">
+                <mat-option value="">— Sin región —</mat-option>
+                <mat-option value="Arica y Parinacota">Arica y Parinacota</mat-option>
+                <mat-option value="Tarapacá">Tarapacá</mat-option>
+                <mat-option value="Antofagasta">Antofagasta</mat-option>
+                <mat-option value="Atacama">Atacama</mat-option>
+                <mat-option value="Coquimbo">Coquimbo</mat-option>
+                <mat-option value="Valparaíso">Valparaíso</mat-option>
+                <mat-option value="O'Higgins">O'Higgins</mat-option>
+                <mat-option value="Maule">Maule</mat-option>
+                <mat-option value="Ñuble">Ñuble</mat-option>
+                <mat-option value="Biobío">Biobío</mat-option>
+                <mat-option value="La Araucanía">La Araucanía</mat-option>
+                <mat-option value="Los Ríos">Los Ríos</mat-option>
+                <mat-option value="Los Lagos">Los Lagos</mat-option>
+                <mat-option value="Aysén">Aysén</mat-option>
+                <mat-option value="Magallanes">Magallanes</mat-option>
+                <mat-option value="Metropolitana">Metropolitana</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <div style="display:flex;align-items:center;gap:12px;margin:8px 0 16px">
+              <mat-slide-toggle formControlName="activa">Activa</mat-slide-toggle>
+            </div>
+            <div class="acciones-formulario">
+              <button mat-button type="button" (click)="cerrarMunicipalidad()">Cancelar</button>
+              <button mat-flat-button class="btn-principal" type="submit" [disabled]="formMun.invalid || guardando()">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
+
+    <!-- ══════════ MODAL: Aseguradora ══════════ -->
+    @if (modalAseg()) {
+      <div class="capa-modal" (click)="cerrarAseguradora()">
+        <div class="panel-modal" style="max-width:440px" (click)="$event.stopPropagation()">
+          <h2>{{ idAseg() ? 'Editar' : 'Nueva' }} aseguradora</h2>
+          <form [formGroup]="formAseg" (ngSubmit)="guardarAseguradora()">
+            <mat-form-field appearance="fill" class="ancho-completo">
+              <mat-label>Nombre</mat-label>
+              <input matInput formControlName="nombre" />
+            </mat-form-field>
+            <mat-form-field appearance="fill" class="ancho-completo">
+              <mat-label>RUT</mat-label>
+              <input matInput formControlName="rut" placeholder="Ej: 76.123.456-7" />
+            </mat-form-field>
+            <div style="display:flex;align-items:center;gap:12px;margin:8px 0 16px">
+              <mat-slide-toggle formControlName="activa">Activa</mat-slide-toggle>
+            </div>
+            <div class="acciones-formulario">
+              <button mat-button type="button" (click)="cerrarAseguradora()">Cancelar</button>
+              <button mat-flat-button class="btn-principal" type="submit" [disabled]="formAseg.invalid || guardando()">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
+
+    <!-- ══════════ MODAL: Planta Revisión Técnica ══════════ -->
+    @if (modalPlanta()) {
+      <div class="capa-modal" (click)="cerrarPlanta()">
+        <div class="panel-modal" style="max-width:480px" (click)="$event.stopPropagation()">
+          <h2>{{ idPlanta() ? 'Editar' : 'Nueva' }} planta</h2>
+          <form [formGroup]="formPlanta" (ngSubmit)="guardarPlanta()">
+            <mat-form-field appearance="fill" class="ancho-completo">
+              <mat-label>Nombre</mat-label>
+              <input matInput formControlName="nombre" />
+            </mat-form-field>
+            <mat-form-field appearance="fill" class="ancho-completo">
+              <mat-label>Dirección</mat-label>
+              <input matInput formControlName="direccion" />
+            </mat-form-field>
+            <div style="display:flex;align-items:center;gap:12px;margin:8px 0 16px">
+              <mat-slide-toggle formControlName="activa">Activa</mat-slide-toggle>
+            </div>
+            <div class="acciones-formulario">
+              <button mat-button type="button" (click)="cerrarPlanta()">Cancelar</button>
+              <button mat-flat-button class="btn-principal" type="submit" [disabled]="formPlanta.invalid || guardando()">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
   `,
   styles: [`
     .tabs-admin { margin-top: -8px; }
@@ -363,10 +696,11 @@ import { Repuesto, TareaDefinicion } from '@core/models';
   `],
 })
 export class AdministracionComponent implements OnInit {
-  private readonly almacenSvc = inject(AlmacenService);
-  private readonly tareasSvc  = inject(TareasDefinicionService);
-  private readonly snack      = inject(MatSnackBar);
-  private readonly fb         = inject(FormBuilder);
+  private readonly almacenSvc  = inject(AlmacenService);
+  private readonly tareasSvc   = inject(TareasDefinicionService);
+  private readonly maestrosSvc = inject(VehiculosMaestrosService);
+  private readonly snack       = inject(MatSnackBar);
+  private readonly fb          = inject(FormBuilder);
 
   // ── Repuestos ─────────────────────────────────────────────────
   repuestos    = signal<Repuesto[]>([]);
@@ -410,9 +744,66 @@ export class AdministracionComponent implements OnInit {
     tipoOt:      [''],
   });
 
+  // ── Sucursales ────────────────────────────────────────────────
+  sucursales    = signal<Sucursal[]>([]);
+  cargandoSuc   = signal(false);
+  modalSuc      = signal(false);
+  idSuc         = signal<string | null>(null);
+  colsSuc       = ['nombre', 'direccion', 'activa', 'acciones'];
+
+  formSuc = this.fb.group({
+    nombre:    ['', Validators.required],
+    ciudad:    [''],
+    direccion: [''],
+    activa:    [true],
+  });
+
+  // ── Municipalidades ───────────────────────────────────────────
+  municipalidades = signal<Municipalidad[]>([]);
+  cargandoMun     = signal(false);
+  modalMun        = signal(false);
+  idMun           = signal<string | null>(null);
+  colsMun         = ['nombre', 'region', 'activa', 'acciones'];
+
+  formMun = this.fb.group({
+    nombre: ['', Validators.required],
+    region: [''],
+    activa: [true],
+  });
+
+  // ── Aseguradoras ──────────────────────────────────────────────
+  aseguradoras  = signal<Aseguradora[]>([]);
+  cargandoAseg  = signal(false);
+  modalAseg     = signal(false);
+  idAseg        = signal<string | null>(null);
+  colsAseg      = ['nombre', 'rut', 'activa', 'acciones'];
+
+  formAseg = this.fb.group({
+    nombre: ['', Validators.required],
+    rut:    [''],
+    activa: [true],
+  });
+
+  // ── Plantas Revisión ──────────────────────────────────────────
+  plantas       = signal<PlantaRevision[]>([]);
+  cargandoPlanta = signal(false);
+  modalPlanta   = signal(false);
+  idPlanta      = signal<string | null>(null);
+  colsPlanta    = ['nombre', 'direccion', 'activa', 'acciones'];
+
+  formPlanta = this.fb.group({
+    nombre:    ['', Validators.required],
+    direccion: [''],
+    activa:    [true],
+  });
+
   ngOnInit() {
     this.cargarRepuestos();
     this.cargarTareas();
+    this.cargarSucursales();
+    this.cargarMunicipalidades();
+    this.cargarAseguradoras();
+    this.cargarPlantas();
   }
 
   // ── Repuestos CRUD ────────────────────────────────────────────
@@ -500,5 +891,145 @@ export class AdministracionComponent implements OnInit {
   eliminarTarea(td: TareaDefinicion) {
     if (!confirm(`¿Eliminar tarea "${td.nombre}"?`)) return;
     this.tareasSvc.delete(td.id).subscribe({ next: () => this.cargarTareas() });
+  }
+
+  // ── Sucursales CRUD ───────────────────────────────────────────
+  cargarSucursales() {
+    this.cargandoSuc.set(true);
+    this.maestrosSvc.getSucursales().subscribe({
+      next: r => { this.sucursales.set(r); this.cargandoSuc.set(false); },
+      error: () => this.cargandoSuc.set(false),
+    });
+  }
+
+  abrirSucursal(r?: Sucursal) {
+    this.idSuc.set(r?.id ?? null);
+    if (r) this.formSuc.patchValue({ nombre: r.nombre, ciudad: r.ciudad ?? '', direccion: r.direccion ?? '', activa: !!r.activa });
+    else this.formSuc.reset({ activa: true });
+    this.modalSuc.set(true);
+  }
+  cerrarSucursal() { this.modalSuc.set(false); }
+
+  guardarSucursal() {
+    if (this.formSuc.invalid) return;
+    this.guardando.set(true);
+    const dto: any = { ...this.formSuc.value, activa: this.formSuc.value.activa ? 1 : 0 };
+    const op = this.idSuc()
+      ? this.maestrosSvc.updateSucursal(this.idSuc()!, dto)
+      : this.maestrosSvc.createSucursal(dto);
+    op.subscribe({
+      next: () => { this.guardando.set(false); this.cerrarSucursal(); this.cargarSucursales(); this.snack.open('Guardado', '', { duration: 2500 }); },
+      error: () => { this.guardando.set(false); this.snack.open('Error al guardar', '', { duration: 2500 }); },
+    });
+  }
+
+  eliminarSucursal(r: Sucursal) {
+    if (!confirm(`¿Eliminar sucursal "${r.nombre}"?`)) return;
+    this.maestrosSvc.deleteSucursal(r.id).subscribe({ next: () => this.cargarSucursales() });
+  }
+
+  // ── Municipalidades CRUD ──────────────────────────────────────
+  cargarMunicipalidades() {
+    this.cargandoMun.set(true);
+    this.maestrosSvc.getMunicipalidades().subscribe({
+      next: r => { this.municipalidades.set(r); this.cargandoMun.set(false); },
+      error: () => this.cargandoMun.set(false),
+    });
+  }
+
+  abrirMunicipalidad(r?: Municipalidad) {
+    this.idMun.set(r?.id ?? null);
+    if (r) this.formMun.patchValue({ nombre: r.nombre, region: r.region ?? '', activa: !!r.activa });
+    else this.formMun.reset({ activa: true });
+    this.modalMun.set(true);
+  }
+  cerrarMunicipalidad() { this.modalMun.set(false); }
+
+  guardarMunicipalidad() {
+    if (this.formMun.invalid) return;
+    this.guardando.set(true);
+    const dto: any = { ...this.formMun.value, activa: this.formMun.value.activa ? 1 : 0 };
+    const op = this.idMun()
+      ? this.maestrosSvc.updateMunicipalidad(this.idMun()!, dto)
+      : this.maestrosSvc.createMunicipalidad(dto);
+    op.subscribe({
+      next: () => { this.guardando.set(false); this.cerrarMunicipalidad(); this.cargarMunicipalidades(); this.snack.open('Guardado', '', { duration: 2500 }); },
+      error: () => { this.guardando.set(false); this.snack.open('Error al guardar', '', { duration: 2500 }); },
+    });
+  }
+
+  eliminarMunicipalidad(r: Municipalidad) {
+    if (!confirm(`¿Eliminar municipalidad "${r.nombre}"?`)) return;
+    this.maestrosSvc.deleteMunicipalidad(r.id).subscribe({ next: () => this.cargarMunicipalidades() });
+  }
+
+  // ── Aseguradoras CRUD ─────────────────────────────────────────
+  cargarAseguradoras() {
+    this.cargandoAseg.set(true);
+    this.maestrosSvc.getAseguradoras().subscribe({
+      next: r => { this.aseguradoras.set(r); this.cargandoAseg.set(false); },
+      error: () => this.cargandoAseg.set(false),
+    });
+  }
+
+  abrirAseguradora(r?: Aseguradora) {
+    this.idAseg.set(r?.id ?? null);
+    if (r) this.formAseg.patchValue({ nombre: r.nombre, rut: r.rut ?? '', activa: !!r.activa });
+    else this.formAseg.reset({ activa: true });
+    this.modalAseg.set(true);
+  }
+  cerrarAseguradora() { this.modalAseg.set(false); }
+
+  guardarAseguradora() {
+    if (this.formAseg.invalid) return;
+    this.guardando.set(true);
+    const dto: any = { ...this.formAseg.value, activa: this.formAseg.value.activa ? 1 : 0 };
+    const op = this.idAseg()
+      ? this.maestrosSvc.updateAseguradora(this.idAseg()!, dto)
+      : this.maestrosSvc.createAseguradora(dto);
+    op.subscribe({
+      next: () => { this.guardando.set(false); this.cerrarAseguradora(); this.cargarAseguradoras(); this.snack.open('Guardado', '', { duration: 2500 }); },
+      error: () => { this.guardando.set(false); this.snack.open('Error al guardar', '', { duration: 2500 }); },
+    });
+  }
+
+  eliminarAseguradora(r: Aseguradora) {
+    if (!confirm(`¿Eliminar aseguradora "${r.nombre}"?`)) return;
+    this.maestrosSvc.deleteAseguradora(r.id).subscribe({ next: () => this.cargarAseguradoras() });
+  }
+
+  // ── Plantas Revisión Técnica CRUD ─────────────────────────────
+  cargarPlantas() {
+    this.cargandoPlanta.set(true);
+    this.maestrosSvc.getPlantasRevision().subscribe({
+      next: r => { this.plantas.set(r); this.cargandoPlanta.set(false); },
+      error: () => this.cargandoPlanta.set(false),
+    });
+  }
+
+  abrirPlanta(r?: PlantaRevision) {
+    this.idPlanta.set(r?.id ?? null);
+    if (r) this.formPlanta.patchValue({ nombre: r.nombre, direccion: r.direccion ?? '', activa: !!r.activa });
+    else this.formPlanta.reset({ activa: true });
+    this.modalPlanta.set(true);
+  }
+  cerrarPlanta() { this.modalPlanta.set(false); }
+
+  guardarPlanta() {
+    if (this.formPlanta.invalid) return;
+    this.guardando.set(true);
+    const dto: any = { ...this.formPlanta.value, activa: this.formPlanta.value.activa ? 1 : 0 };
+    const op = this.idPlanta()
+      ? this.maestrosSvc.updatePlantaRevision(this.idPlanta()!, dto)
+      : this.maestrosSvc.createPlantaRevision(dto);
+    op.subscribe({
+      next: () => { this.guardando.set(false); this.cerrarPlanta(); this.cargarPlantas(); this.snack.open('Guardado', '', { duration: 2500 }); },
+      error: () => { this.guardando.set(false); this.snack.open('Error al guardar', '', { duration: 2500 }); },
+    });
+  }
+
+  eliminarPlanta(r: PlantaRevision) {
+    if (!confirm(`¿Eliminar planta "${r.nombre}"?`)) return;
+    this.maestrosSvc.deletePlantaRevision(r.id).subscribe({ next: () => this.cargarPlantas() });
   }
 }

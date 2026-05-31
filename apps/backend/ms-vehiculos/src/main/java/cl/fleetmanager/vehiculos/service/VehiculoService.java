@@ -59,6 +59,12 @@ public class VehiculoService {
             .capacidadEstanque(datos.getCapacidadEstanque())
             .taraKg(datos.getTaraKg())
             .capacidadCargaKg(datos.getCapacidadCargaKg())
+            .condicion(datos.getCondicion())
+            .valorCompra(datos.getValorCompra())
+            .fechaCompra(datos.getFechaCompra())
+            .paisOrigen(datos.getPaisOrigen())
+            .estadoOperacion(datos.getEstadoOperacion())
+            .sucursalId(datos.getSucursalId())
             .build());
     }
 
@@ -80,6 +86,12 @@ public class VehiculoService {
         if (datos.getCapacidadEstanque()  != null) v.setCapacidadEstanque(datos.getCapacidadEstanque());
         if (datos.getTaraKg()             != null) v.setTaraKg(datos.getTaraKg());
         if (datos.getCapacidadCargaKg()   != null) v.setCapacidadCargaKg(datos.getCapacidadCargaKg());
+        if (datos.getCondicion()          != null) v.setCondicion(datos.getCondicion());
+        if (datos.getValorCompra()        != null) v.setValorCompra(datos.getValorCompra());
+        if (datos.getFechaCompra()        != null) v.setFechaCompra(datos.getFechaCompra());
+        if (datos.getPaisOrigen()         != null) v.setPaisOrigen(datos.getPaisOrigen());
+        if (datos.getEstadoOperacion()    != null) v.setEstadoOperacion(datos.getEstadoOperacion());
+        if (datos.getSucursalId()         != null) v.setSucursalId(datos.getSucursalId());
         return repositorio.save(v);
     }
 

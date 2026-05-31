@@ -24,7 +24,9 @@ export interface UsuarioSistema {
 // ─── Vehículo ────────────────────────────────────────────────
 export type EstadoVehiculo = 'OPERATIVO' | 'EN_TALLER' | 'FUERA_SERVICIO';
 export type TipoVehiculo = 'CAMION' | 'BUS' | 'FURGON' | 'CAMIONETA' | 'OTRO';
-export type TipoCombustible = 'DIESEL' | 'GASOLINA' | 'GAS' | 'ELECTRICO';
+export type TipoCombustible = 'DIESEL' | 'BENCINA' | 'GASOLINA' | 'GNC' | 'GAS' | 'ELECTRICO' | 'HIDROGENO';
+export type EstadoOperacion  = 'EN_OPERACION' | 'EN_MANTENCION' | 'FUERA_SERVICIO' | 'BAJA';
+export type CondicionVehiculo = 'NUEVO' | 'USADO';
 
 export interface Vehiculo {
   id: string;
@@ -36,6 +38,7 @@ export interface Vehiculo {
   tipo: TipoVehiculo;
   combustible: TipoCombustible;
   estado: EstadoVehiculo;
+  estadoOperacion?: EstadoOperacion;
   kmActuales: number;
   kmProximoServicio: number;
   vencimientoRevision?: string;
@@ -47,6 +50,11 @@ export interface Vehiculo {
   capacidadEstanque?: number;
   taraKg?: number;
   capacidadCargaKg?: number;
+  condicion?: CondicionVehiculo;
+  valorCompra?: number;
+  fechaCompra?: string;
+  paisOrigen?: string;
+  sucursalId?: string;
   eliminado: boolean;
   createdAt: string;
   updatedAt: string;
@@ -273,6 +281,44 @@ export interface KpiDashboard {
   otsCerradas: number;
   totalConductores: number;
   alertasBajoStock: number;
+}
+
+// ─── Maestros Vehículos ───────────────────────────────────────
+export interface Sucursal {
+  id: string; empresaId: string; nombre: string;
+  direccion?: string; ciudad?: string; activa: number; eliminado: number;
+}
+export interface Municipalidad {
+  id: string; empresaId: string; nombre: string; region?: string;
+  activa: number; eliminado: number;
+}
+export interface Aseguradora {
+  id: string; empresaId: string; nombre: string; rut?: string;
+  activa: number; eliminado: number;
+}
+export interface PlantaRevision {
+  id: string; empresaId: string; nombre: string; direccion?: string;
+  activa: number; eliminado: number;
+}
+
+// ─── Documentos Vehículo ──────────────────────────────────────
+export interface PermisoCirculacion {
+  id: string; vehiculoId: string; empresaId: string;
+  municipalidadId?: string; municipalidadNombre?: string;
+  fechaPago?: string; valor?: number; fechaVencimiento?: string;
+  documento?: string; createdAt: string;
+}
+export interface SeguroSoap {
+  id: string; vehiculoId: string; empresaId: string;
+  aseguradoraId?: string; aseguradoraNombre?: string;
+  fechaEmision?: string; valor?: number; fechaVencimiento?: string;
+  poliza?: string; createdAt: string;
+}
+export interface RevisionTecnica {
+  id: string; vehiculoId: string; empresaId: string;
+  plantaId?: string; plantaNombre?: string;
+  fechaRevision?: string; valor?: number; fechaVencimiento?: string;
+  resultado?: 'APROBADO' | 'RECHAZADO' | 'CONDICIONADO'; createdAt: string;
 }
 
 // ─── Combustible ─────────────────────────────────────────────
