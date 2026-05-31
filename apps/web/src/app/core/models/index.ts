@@ -55,6 +55,8 @@ export interface Vehiculo {
   fechaCompra?: string;
   paisOrigen?: string;
   sucursalId?: string;
+  usaAdBlue?: boolean;
+  normaEuro?: string;
   eliminado: boolean;
   createdAt: string;
   updatedAt: string;

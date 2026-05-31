@@ -65,6 +65,8 @@ public class VehiculoService {
             .paisOrigen(datos.getPaisOrigen())
             .estadoOperacion(datos.getEstadoOperacion())
             .sucursalId(datos.getSucursalId())
+            .usaAdBlue(datos.getUsaAdBlue() != null ? datos.getUsaAdBlue() : 0)
+            .normaEuro(datos.getNormaEuro())
             .build());
     }
 
@@ -92,6 +94,8 @@ public class VehiculoService {
         if (datos.getPaisOrigen()         != null) v.setPaisOrigen(datos.getPaisOrigen());
         if (datos.getEstadoOperacion()    != null) v.setEstadoOperacion(datos.getEstadoOperacion());
         if (datos.getSucursalId()         != null) v.setSucursalId(datos.getSucursalId());
+        if (datos.getUsaAdBlue()          != null) v.setUsaAdBlue(datos.getUsaAdBlue());
+        if (datos.getNormaEuro()          != null) v.setNormaEuro(datos.getNormaEuro());
         return repositorio.save(v);
     }
 

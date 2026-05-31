@@ -48,6 +48,9 @@ spring:
         - id: operaciones-combustible
           uri: http://${MS_OPERACIONES_HOST:localhost}:8086
           predicates: [Path=/api/v1/combustible/**]
+        - id: operaciones-adblue
+          uri: http://${MS_OPERACIONES_HOST:localhost}:8086
+          predicates: [Path=/api/v1/adblue/**]
         - id: operaciones-servicios
           uri: http://${MS_OPERACIONES_HOST:localhost}:8086
           predicates: [Path=/api/v1/servicios/**]

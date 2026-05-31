@@ -95,6 +95,14 @@ public class Vehiculo {
     @Column(name = "SUCURSAL_ID", length = 36)
     private String sucursalId;
 
+    /** 0 = no usa AdBlue, 1 = usa AdBlue */
+    @Column(name = "USA_ADBLUE")
+    private Integer usaAdBlue;
+
+    /** EURO_III | EURO_IV | EURO_V | EURO_VI */
+    @Column(name = "NORMA_EURO", length = 10)
+    private String normaEuro;
+
     @Column(name = "ELIMINADO")
     private Integer eliminado;
 
@@ -111,6 +119,7 @@ public class Vehiculo {
         if (combustible == null) combustible = "DIESEL";
         if (eliminado == null)   eliminado   = 0;
         if (kmActuales == null)  kmActuales  = 0L;
+        if (usaAdBlue == null)   usaAdBlue   = 0;
         createdAt = updatedAt = LocalDateTime.now();
     }
 

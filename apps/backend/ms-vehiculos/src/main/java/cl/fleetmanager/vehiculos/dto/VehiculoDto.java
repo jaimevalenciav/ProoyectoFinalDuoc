@@ -31,4 +31,6 @@ public class VehiculoDto {
     String paisOrigen;
     String estadoOperacion;
     String sucursalId;
+    Integer usaAdBlue;
+    String normaEuro;
 }
