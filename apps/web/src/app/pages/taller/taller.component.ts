@@ -147,8 +147,8 @@ interface MaterialOt {
 
 <!-- ── Formulario nueva OT ───────────────────────────────────────────────────── -->
 @if (mostrarFormulario()) {
-  <div class="overlay" (click)="cerrarFormulario()">
-    <div class="panel-formulario" (click)="$event.stopPropagation()">
+  <div class="capa-modal" (click)="cerrarFormulario()">
+    <div class="panel-modal-ot" (click)="$event.stopPropagation()">
       <div class="panel-encabezado">
         <h2>{{ otEditando() ? 'Editar OT ' + otEditando()!.numero : 'Nueva orden de trabajo' }}</h2>
         <button mat-icon-button (click)="cerrarFormulario()"><mat-icon>close</mat-icon></button>
@@ -277,8 +277,24 @@ interface MaterialOt {
     ::ng-deep .avance-medio .mdc-linear-progress__bar-inner { border-color:#C25E01 !important; }
     ::ng-deep .avance-alto  .mdc-linear-progress__bar-inner { border-color:#007AF5 !important; }
 
-    .overlay { position:fixed; inset:0; background:rgba(0,0,0,.4); display:flex; justify-content:flex-end; z-index:1000; }
-    .panel-formulario { background:#fff; width:540px; max-width:95vw; height:100%; overflow-y:auto; padding:28px 24px; display:flex; flex-direction:column; gap:20px; }
+    /* ── Modal centrado ── */
+    .capa-modal {
+      position: fixed; inset: 0;
+      background: rgba(15,23,42,.45);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+    .panel-modal-ot {
+      background: var(--color-superficie, #fff);
+      border-radius: var(--radio-lg, 12px);
+      width: min(600px, 96vw);
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 28px 28px 24px;
+      display: flex; flex-direction: column; gap: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.22);
+    }
     .panel-encabezado { display:flex; justify-content:space-between; align-items:flex-start; }
     .formulario-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
     .acciones-form { display:flex; justify-content:flex-end; gap:8px; }
