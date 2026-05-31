@@ -1,0 +1,793 @@
+// ── @use debe estar primero ────────────────────────────────────────────────────
+@use '@angular/material' as mat;
+
+// ── Tokens de diseño ──────────────────────────────────────────────────────────
+:root {
+  // ── Paleta navy (sidebar, acentos) ──────────────────────────────────────────
+  --navy:          #1a2540;
+  --navy-mid:      #243050;
+  --navy-light:    #2e3d63;
+
+  // ── Fondos slate ────────────────────────────────────────────────────────────
+  --slate:         #f0f4f9;
+  --slate-mid:     #e4eaf3;
+  --slate-dark:    #ccd5e6;
+
+  // ── Texto ───────────────────────────────────────────────────────────────────
+  --ink:           #1a2540;
+  --ink-mid:       #4a5878;
+  --ink-soft:      #8492b0;
+
+  // ── Acento principal ────────────────────────────────────────────────────────
+  --accent:        #2563eb;
+  --accent-dark:   #1d4ed8;
+  --accent-light:  #dbeafe;
+
+  // ── Semánticos ──────────────────────────────────────────────────────────────
+  --success:       #16a34a;
+  --success-light: #dcfce7;
+  --warn:          #d97706;
+  --warn-light:    #fef3c7;
+  --danger:        #dc2626;
+  --danger-light:  #fee2e2;
+
+  // ── Radios ──────────────────────────────────────────────────────────────────
+  --radius-sm:  5px;
+  --radius-md:  8px;
+  --radius-lg:  12px;
+
+  // ── Aliases legacy (compatibilidad con componentes existentes) ───────────────
+  --azul-900:        #0d1a26;
+  --azul-700:        #1a2540;
+  --azul-600:        #1a2540;
+  --azul-500:        #243050;
+  --azul-400:        #4a5878;
+  --azul-300:        #8492b0;
+  --azul-200:        #ccd5e6;
+  --azul-100:        #e4eaf3;
+  --azul-50:         #f0f4f9;
+  --color-fondo:          #f0f4f9;
+  --color-superficie:     #ffffff;
+  --color-superficie-2:   #f0f4f9;
+  --color-borde:          #ccd5e6;
+  --color-borde-foco:     #2563eb;
+  --color-texto:          #1a2540;
+  --color-texto-2:        #4a5878;
+  --color-texto-3:        #8492b0;
+  --color-exito:          #16a34a;
+  --color-exito-fondo:    #dcfce7;
+  --color-peligro:        #dc2626;
+  --color-peligro-fondo:  #fee2e2;
+  --color-advertencia:    #d97706;
+  --color-adv-fondo:      #fef3c7;
+  --color-info-fondo:     #e4eaf3;
+  --radio-xs: 4px;
+  --radio-sm: var(--radius-sm);
+  --radio-md: var(--radius-md);
+  --radio-lg: var(--radius-lg);
+  --radio-xl: 16px;
+  --ancho-sidebar: 252px;
+  --fuente: 'Inter', system-ui, -apple-system, sans-serif;
+  --fuente-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+// ── Reset & base ──────────────────────────────────────────────────────────────
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--slate);
+  color: var(--ink);
+  font-family: var(--fuente);
+  font-size: 14px;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// ── Scrollbar ─────────────────────────────────────────────────────────────────
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--slate); }
+::-webkit-scrollbar-thumb { background: var(--slate-dark); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
+
+// ── Angular Material: tema ────────────────────────────────────────────────────
+@include mat.core();
+
+$tema-azul: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$blue-palette,
+  ),
+  typography: (
+    brand-family: 'Inter',
+    bold-weight:    600,
+    medium-weight:  500,
+    regular-weight: 400,
+  ),
+  density: (
+    scale: -1,
+  ),
+));
+
+:root { @include mat.all-component-themes($tema-azul); }
+
+// ── Form fields ───────────────────────────────────────────────────────────────
+// floatLabel: 'always' está activo globalmente (app.config.ts).
+// El label SIEMPRE aparece arriba; Angular Material gestiona el padding interno.
+// Solo necesitamos definir colores, tipografía y decoración visual.
+
+.mat-mdc-form-field {
+
+  // ── Contenedor filled ────────────────────────────────────────────────────────
+  .mdc-text-field--filled {
+    background: #fff !important;
+    border: 1.5px solid var(--slate-dark) !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+    transition: border-color .15s, box-shadow .15s !important;
+    &:hover:not(.mdc-text-field--focused) { border-color: #94a3b8 !important; }
+  }
+  .mdc-text-field--filled.mdc-text-field--focused {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.10) !important;
+  }
+
+  // ── Label: SIEMPRE visible ────────────────────────────────────────────────
+  // M3 en Chrome usa -webkit-text-fill-color (anula 'color'), y puede
+  // generar oklch() con canal alpha casi 0. Hay que forzar AMBAS propiedades.
+  .mdc-floating-label,
+  .mat-mdc-floating-label,
+  label.mdc-floating-label {
+    color: #64748b !important;
+    -webkit-text-fill-color: #64748b !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+    font-family: var(--fuente) !important;
+    font-size: 16px !important;   // escala 0.75 por MDC → ~12px visible
+    font-weight: 500 !important;
+    letter-spacing: .01em !important;
+  }
+  // Cuando el campo tiene foco: label azul
+  .mdc-text-field--focused .mdc-floating-label,
+  .mdc-text-field--focused label.mdc-floating-label {
+    color: var(--accent) !important;
+    -webkit-text-fill-color: var(--accent) !important;
+    opacity: 1 !important;
+  }
+
+  // ── Texto ingresado / valor seleccionado ──────────────────────────────────
+  input.mdc-text-field__input,
+  textarea.mdc-text-field__input {
+    color: #1a2540 !important;
+    font-size: 13px !important;
+    font-family: var(--fuente) !important;
+    caret-color: var(--accent);
+    margin-top: 4px !important;   // más aire entre label y texto ingresado
+    // Auto-mayúsculas para campos de texto (excluye number, email, date, password)
+    &:not([type="number"]):not([type="email"]):not([type="date"]):not([type="password"]) {
+      text-transform: uppercase !important;
+    }
+    &::placeholder { color: #b0bac9 !important; opacity: 1 !important; text-transform: none !important; }
+  }
+  .mat-mdc-select-value        { color: #1a2540 !important; font-size: 13px !important; font-family: var(--fuente) !important; }
+  .mat-mdc-select-placeholder  { color: #b0bac9 !important; }
+
+  // ── Decoraciones no deseadas ──────────────────────────────────────────────
+  .mdc-line-ripple                  { display: none !important; }
+  .mat-mdc-form-field-focus-overlay { opacity: 0 !important; }
+  .mat-mdc-form-field-subscript-wrapper { min-height: 14px; }
+}
+
+// Select panel
+.mat-mdc-select-panel {
+  background: #fff !important;
+  border: 1px solid var(--slate-dark) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 20px rgba(26,37,64,.14) !important;
+  padding: 4px !important;
+}
+.mat-mdc-option {
+  font-size: 13px !important;
+  font-family: var(--fuente) !important;
+  color: #1a2540 !important;
+  min-height: 36px !important;
+  border-radius: 6px !important;
+  &:hover { background: var(--slate) !important; }
+}
+.mat-mdc-option.mdc-list-item--selected {
+  background: var(--accent-light) !important;
+  color: var(--accent) !important;
+  font-weight: 500 !important;
+}
+
+// ── Botones ───────────────────────────────────────────────────────────────────
+// Reset base de Material
+.mat-mdc-button, .mat-mdc-raised-button, .mat-mdc-flat-button,
+.mat-mdc-outlined-button, .mat-mdc-icon-button {
+  font-family: var(--fuente) !important;
+  font-weight: 600 !important;
+  letter-spacing: .02em !important;
+}
+
+// Primario (.btn-primary / alias .btn-principal)
+.btn-primary, .btn-principal {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  height: 34px !important;
+  padding: 0 14px !important;
+  background: var(--accent) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: var(--radius-sm) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  font-family: var(--fuente) !important;
+  letter-spacing: .02em !important;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.12) !important;
+  transition: background .15s ease, transform .1s ease, box-shadow .1s ease !important;
+
+  &:hover {
+    background: var(--accent-dark) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 3px 8px rgba(37,99,235,.30), inset 0 1px 0 rgba(255,255,255,.12) !important;
+  }
+  &:active {
+    transform: translateY(0) !important;
+    box-shadow: none !important;
+  }
+}
+
+// Secundario (.btn-secondary / alias .btn-secundario)
+.btn-secondary, .btn-secundario {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  height: 34px !important;
+  padding: 0 14px !important;
+  background: #fff !important;
+  color: var(--ink) !important;
+  border: 1.5px solid var(--slate-dark) !important;
+  border-radius: var(--radius-sm) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  font-family: var(--fuente) !important;
+  letter-spacing: .02em !important;
+  cursor: pointer;
+  transition: border-color .15s ease, color .15s ease, background .15s ease !important;
+
+  &:hover {
+    border-color: #94a3b8 !important;
+    color: var(--ink) !important;
+    background: var(--slate) !important;
+  }
+}
+
+// Ghost (.btn-ghost)
+.btn-ghost {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  height: 34px !important;
+  padding: 0 10px !important;
+  background: transparent !important;
+  color: var(--ink-soft) !important;
+  border: none !important;
+  border-radius: var(--radius-sm) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  font-family: var(--fuente) !important;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease !important;
+
+  &:hover {
+    background: var(--slate-mid) !important;
+    color: var(--ink) !important;
+  }
+}
+
+// Snackbar
+.mat-mdc-snack-bar-container {
+  border-radius: var(--radius-md) !important;
+  font-family: var(--fuente) !important;
+  font-size: 13px !important;
+}
+
+// ── Cards Material ────────────────────────────────────────────────────────────
+.mat-mdc-card {
+  background: #fff !important;
+  border: 1px solid var(--slate-mid) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: 0 1px 3px rgba(26,37,64,.06), 0 1px 2px rgba(26,37,64,.04) !important;
+}
+
+// ── Dialogs Material ──────────────────────────────────────────────────────────
+.mat-mdc-dialog-container {
+  background: #fff !important;
+  border-radius: var(--radius-lg) !important;
+  border: 1px solid var(--slate-mid) !important;
+  box-shadow: 0 20px 60px rgba(26,37,64,.18) !important;
+}
+
+// Dialog QR impresión
+.dlg-qr-print .mat-mdc-dialog-container .mdc-dialog__surface {
+  padding: 0 !important;
+  overflow-y: auto !important;
+  border-radius: var(--radius-lg) !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.dlg-qr-print .mat-mdc-dialog-container { padding: 0 !important; }
+.dlg-qr-print .mdc-dialog__content { padding: 0 !important; max-height: unset !important; }
+
+// Dialog OT: sin padding interno de Material para que el componente maneje su propio layout
+.dlg-ot .mat-mdc-dialog-container .mdc-dialog__surface {
+  padding: 0 !important;
+  overflow: hidden !important;
+  border-radius: var(--radius-lg) !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.dlg-ot .mat-mdc-dialog-container {
+  padding: 0 !important;
+}
+.dlg-ot .mdc-dialog__content {
+  padding: 0 !important;
+  max-height: unset !important;
+  overflow: hidden !important;
+}
+
+// ── Tablas ────────────────────────────────────────────────────────────────────
+.mat-mdc-table {
+  background: #fff !important;
+  border-radius: var(--radius-lg) !important;
+  overflow: hidden;
+  border: 1px solid var(--slate-mid) !important;
+  font-family: var(--fuente) !important;
+}
+
+.mat-mdc-header-row {
+  background: var(--slate) !important;
+  border-bottom: 1.5px solid var(--slate-mid) !important;
+}
+.mat-mdc-header-cell {
+  color: var(--ink-soft) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .08em !important;
+  font-family: var(--fuente) !important;
+  border-bottom: none !important;
+}
+
+.mat-mdc-row {
+  height: 46px !important;
+  border-bottom: 1px solid var(--slate) !important;
+  transition: background .1s ease;
+
+  &:hover { background: #f7f9fd !important; }
+  &:last-child { border-bottom: none !important; }
+}
+.mat-mdc-cell {
+  color: var(--ink) !important;
+  border-bottom-color: var(--slate) !important;
+  font-size: 13px !important;
+  font-family: var(--fuente) !important;
+}
+
+// Acciones de fila: visibles solo en hover
+.mat-mdc-row .acciones-fila {
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+.mat-mdc-row:hover .acciones-fila { opacity: 1; }
+
+table.mat-mdc-table { width: 100%; }
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+app-shell .barra-lateral {
+  .mdc-list-item__primary-text,
+  .mat-mdc-list-item-unscoped-content,
+  .mdc-list-item__content,
+  .mat-list-item-content {
+    color: rgba(255,255,255,.65) !important;
+    font-size: 13px !important;
+    font-family: var(--fuente) !important;
+  }
+
+  // Hover de ítem
+  .mat-mdc-list-item:hover {
+    background: rgba(255,255,255,.04) !important;
+    .mdc-list-item__primary-text,
+    .mat-mdc-list-item-unscoped-content { color: rgba(255,255,255,.9) !important; }
+  }
+
+  // Ítem activo: borde izquierdo accent + fondo sutil
+  .mat-mdc-list-item.enlace-activo {
+    background: rgba(37,99,235,.18) !important;
+    border-left: 2px solid var(--accent) !important;
+    .mdc-list-item__primary-text,
+    .mat-mdc-list-item-unscoped-content { color: #fff !important; }
+  }
+}
+
+// ── Clases utilitarias ────────────────────────────────────────────────────────
+.superficie {
+  background: #fff;
+  border: 1px solid var(--slate-mid);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(26,37,64,.06);
+}
+
+.superficie-2 {
+  background: var(--slate);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  border: 1px solid var(--slate-mid);
+}
+
+.texto-primario  { color: var(--accent); }
+.texto-exito     { color: var(--success); }
+.texto-peligro   { color: var(--danger); }
+.texto-atenuado  { color: var(--ink-soft); }
+
+// ── Status pills ──────────────────────────────────────────────────────────────
+// Uso: <span class="pill pill-activo"><i class="ti ti-circle-check"></i> Activo</span>
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--fuente);
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: .02em;
+  line-height: 1;
+
+  i { font-size: 11px; line-height: 1; }
+
+  &.pill-activo {
+    background: var(--success-light);
+    color: #15803d;
+  }
+  &.pill-taller {
+    background: var(--warn-light);
+    color: #b45309;
+  }
+  &.pill-fuera {
+    background: var(--danger-light);
+    color: #b91c1c;
+  }
+  &.pill-info {
+    background: var(--accent-light);
+    color: var(--accent);
+  }
+  &.pill-neutral {
+    background: var(--slate);
+    color: var(--ink-mid);
+    border: 1px solid var(--slate-dark);
+  }
+}
+
+// Alias para compatibilidad con clases .insignia existentes
+.insignia {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--fuente);
+  letter-spacing: .02em;
+
+  &.insignia-exito       { background: #007AF5; color: #fff; }
+  &.insignia-peligro     { background: #C10A5A; color: #fff; }
+  &.insignia-advertencia { background: #C25E01; color: #fff; }
+  &.insignia-info        { background: #007AF5; color: #fff; }
+  &.insignia-azul        { background: #1B2C40; color: #fff; }
+  &.insignia-aprobado    { background: #16a34a; color: #fff; }
+  &.insignia-neutro      { background: #64748b; color: #fff; }
+
+  // Alias para compatibilidad con clases .badge-* usadas en taller/vehiculos/conductores
+  &.badge-pendiente  { background: #1B2C40; color: #FFFFFF; }
+  &.badge-ejecucion  { background: #FEFF04; color: #1B2C40; }
+  &.badge-bloqueada  { background: #C10A5A; color: #FFFFFF; }
+  &.badge-cerrada    { background: #007AF5; color: #FFFFFF; }
+  &.badge-preventiva { background: #007AF5; color: #FFFFFF; }
+  &.badge-correctiva { background: #C25E01; color: #FFFFFF; }
+  &.badge-neumaticos { background: #C10A5A; color: #FFFFFF; }
+  &.badge-electrica  { background: #1B2C40; color: #FEFF04; }
+  &.badge-operativo  { background: #007AF5; color: #FFFFFF; }
+  &.badge-en-taller  { background: #C25E01; color: #FFFFFF; }
+  &.badge-fuera      { background: #C10A5A; color: #FFFFFF; }
+  &.badge-activo     { background: #007AF5; color: #FFFFFF; }
+  &.badge-inactivo   { background: #1B2C40; color: #FFFFFF; }
+  &.badge-vacaciones { background: #FEFF04; color: #1B2C40; }
+}
+
+// ── Sistema de badges de estado ───────────────────────────────────────────────
+// Paleta oficial: #1B2C40 · #FEFF04 · #C10A5A · #C25E01 · #007AF5 · #FFFFFF
+// Uso: <span class="badge badge-pendiente">Pendiente</span>
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--fuente);
+  letter-spacing: .04em;
+  line-height: 1;
+  white-space: nowrap;
+
+  // ── OT / Estado ──────────────────────────────────────────────────────────────
+  &.badge-pendiente  { background: #1B2C40; color: #FFFFFF; }          // navy   → blanco
+  &.badge-ejecucion  { background: #FEFF04; color: #1B2C40; }          // yellow → navy
+  &.badge-bloqueada  { background: #C10A5A; color: #FFFFFF; }          // crimson→ blanco
+  &.badge-cerrada    { background: #007AF5; color: #FFFFFF; }          // blue   → blanco
+
+  // ── OT / Tipo ────────────────────────────────────────────────────────────────
+  &.badge-preventiva { background: #007AF5; color: #FFFFFF; }          // blue   → blanco
+  &.badge-correctiva { background: #C25E01; color: #FFFFFF; }          // orange → blanco
+  &.badge-neumaticos { background: #C10A5A; color: #FFFFFF; }          // crimson→ blanco
+  &.badge-electrica  { background: #1B2C40; color: #FEFF04; }          // navy   → yellow
+
+  // ── Vehículo / Estado ────────────────────────────────────────────────────────
+  &.badge-operativo  { background: #007AF5; color: #FFFFFF; }          // blue   → blanco
+  &.badge-en-taller  { background: #C25E01; color: #FFFFFF; }          // orange → blanco
+  &.badge-fuera      { background: #C10A5A; color: #FFFFFF; }          // crimson→ blanco
+
+  // ── Conductor / Estado ───────────────────────────────────────────────────────
+  &.badge-activo     { background: #007AF5; color: #FFFFFF; }          // blue   → blanco
+  &.badge-inactivo   { background: #1B2C40; color: #FFFFFF; }          // navy   → blanco
+  &.badge-vacaciones { background: #FEFF04; color: #1B2C40; }          // yellow → navy
+
+  // ── Genéricos ───────────────────────────────────────────────────────────────
+  &.badge-exito      { background: #007AF5; color: #FFFFFF; }
+  &.badge-peligro    { background: #C10A5A; color: #FFFFFF; }
+  &.badge-advertencia{ background: #C25E01; color: #FFFFFF; }
+  &.badge-neutro     { background: #1B2C40; color: #FFFFFF; }
+}
+
+// ── Badge patente / ID técnico ─────────────────────────────────────────────────
+// Uso: <span class="badge-mono">ABC-1234</span>
+.badge-mono {
+  font-family: var(--fuente-mono);
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--slate);
+  border: 1px solid var(--slate-dark);
+  border-radius: 4px;
+  padding: 3px 7px;
+  color: var(--ink);
+  letter-spacing: .02em;
+}
+
+// Clase utilitaria para cualquier texto en mono (patentes, IDs, valores numéricos técnicos)
+.mono { font-family: var(--fuente-mono) !important; font-size: 12px !important; font-weight: 500 !important; }
+
+// ── Celda de tabla: nombre + subtítulo ────────────────────────────────────────
+.celda-nombre {
+  .nombre-principal {
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--ink);
+    line-height: 1.3;
+  }
+  .nombre-sub {
+    font-size: 10px;
+    color: var(--ink-soft);
+    line-height: 1.3;
+    margin-top: 1px;
+  }
+}
+
+// ── Encabezado de página ──────────────────────────────────────────────────────
+.encabezado-pagina {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -.3px;
+    font-family: var(--fuente);
+  }
+
+  .acciones-encabezado {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+// ── Modal / Panel lateral ─────────────────────────────────────────────────────
+.capa-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(26,37,64,.40);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(3px);
+}
+
+.panel-modal {
+  background: #fff;
+  border: 1px solid var(--slate-mid);
+  border-radius: var(--radius-lg);
+  width: 520px;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(26,37,64,.18);
+
+  // Header con borde inferior
+  .modal-header {
+    padding: 16px 20px;
+    border-bottom: 1.5px solid var(--slate-mid);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    h2 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--ink);
+      font-family: var(--fuente);
+      letter-spacing: -.1px;
+    }
+
+    .btn-cerrar {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--slate-dark);
+      border-radius: 5px;
+      background: transparent;
+      color: var(--ink-soft);
+      cursor: pointer;
+      transition: background .1s ease, color .1s ease;
+      font-size: 16px;
+
+      &:hover { background: var(--slate); color: var(--ink); }
+    }
+  }
+
+  // Cuerpo scrollable
+  .modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+
+    // H2 sin header estructurado (compatibilidad con modales existentes)
+    > h2 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--ink);
+      font-family: var(--fuente);
+      margin-bottom: 16px;
+    }
+  }
+
+  // Footer con fondo slate y borde superior
+  .modal-footer, .acciones-formulario {
+    background: var(--slate);
+    border-top: 1.5px solid var(--slate-mid);
+    padding: 12px 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+}
+
+// Compatibilidad: modales sin estructura .modal-header/.modal-body
+.panel-modal > h2:first-child {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  font-family: var(--fuente);
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1.5px solid var(--slate-mid);
+}
+.panel-modal > .acciones-formulario {
+  background: var(--slate);
+  border-top: 1.5px solid var(--slate-mid);
+  margin: 8px -20px -20px;
+  padding: 12px 20px;
+}
+// Si panel-modal tiene padding directo (modales viejos)
+.panel-modal { padding: 20px; }
+
+// ── Tarjeta KPI ───────────────────────────────────────────────────────────────
+.tarjeta-kpi {
+  background: #fff;
+  border: 1px solid var(--slate-mid);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: 0 1px 3px rgba(26,37,64,.06);
+  transition: box-shadow .15s ease, transform .15s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(26,37,64,.10);
+    transform: translateY(-1px);
+  }
+
+  .etiqueta-kpi {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    margin-bottom: 6px;
+  }
+
+  .valor-kpi {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -.5px;
+    font-family: var(--fuente);
+  }
+
+  .sub-kpi {
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-top: 3px;
+  }
+
+  .icono-kpi {
+    width: 38px; height: 38px;
+    border-radius: var(--radius-md);
+    background: var(--accent-light);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--accent);
+    margin-bottom: 10px;
+    font-size: 18px;
+  }
+}
+
+// ── Cuadrícula dos columnas ───────────────────────────────────────────────────
+.dos-columnas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+// ── Spinner centrado ──────────────────────────────────────────────────────────
+.spinner-centrado { display: flex; justify-content: center; padding: 80px; }
+
+// ── Barra de búsqueda / filtros ───────────────────────────────────────────────
+.barra-busqueda, .barra-filtros {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+// ── Título de sección ─────────────────────────────────────────────────────────
+.titulo-seccion {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin: 20px 0 10px;
+  font-family: var(--fuente);
+}
+
+// ── Clases complementarias ────────────────────────────────────────────────────
+.ancho-completo { width: 100%; }

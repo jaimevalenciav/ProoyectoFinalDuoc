@@ -1,0 +1,32 @@
+# Java / Maven
+**/target/
+*.class
+*.jar
+!**/target/*.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.code-workspace
+
+# Node / Angular
+**/node_modules/
+**/dist/
+**/.angular/
+
+# Oracle Wallet (sensitive)
+wallet/
+Wallet_*.zip
+
+# Environment / secrets
+.env
+*.env
+**/*.env
+
+# Logs
+logs/
+*.log
+
+# macOS
+.DS_Store

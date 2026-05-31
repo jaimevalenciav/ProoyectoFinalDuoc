@@ -1,0 +1,118 @@
+version: "3.9"
+
+# ── Compose para desarrollo local ────────────────────────────────────────────
+# Requisitos:
+#   - Oracle Wallet en ./wallet/  (apuntado por ORACLE_WALLET_PATH)
+#   - Archivo .env con secretos   (ver .env.ejemplo)
+
+services:
+
+  # ── BFF Web (API Gateway para Angular) ────────────────────────────────────
+  bff-web:
+    build: apps/backend/bff-web
+    ports: ["8080:8080"]
+    environment:
+      AZURE_B2C_TENANT:    ${AZURE_B2C_TENANT}
+      MS_VEHICULOS_HOST:   ms-vehiculos
+      MS_CONDUCTORES_HOST: ms-conductores
+      MS_TALLER_HOST:      ms-taller
+      MS_ALMACEN_HOST:     ms-almacen
+      MS_OPERACIONES_HOST: ms-operaciones
+      MS_REPORTES_HOST:    ms-reportes
+      URL_FRONTEND:        http://localhost:4200
+    depends_on:
+      - ms-vehiculos
+      - ms-conductores
+      - ms-taller
+      - ms-almacen
+      - ms-operaciones
+      - ms-reportes
+    networks: [red-flota]
+
+  # ── BFF Móvil ─────────────────────────────────────────────────────────────
+  bff-movil:
+    build: apps/backend/bff-mobile
+    ports: ["8081:8081"]
+    environment:
+      ORACLE_TNS_NAME:          ${ORACLE_TNS_NAME}
+      ORACLE_WALLET_PATH:       /wallet
+      ORACLE_USUARIO:           ${ORACLE_USUARIO}
+      ORACLE_CLAVE:             ${ORACLE_CLAVE}
+      ORACLE_ESQUEMA:           ${ORACLE_ESQUEMA}
+      AZURE_B2C_TENANT:         ${AZURE_B2C_TENANT}
+      AZURE_BUS_SERVICIO_CONEXION: ${AZURE_BUS_SERVICIO_CONEXION}
+      MS_VEHICULOS_HOST:        ms-vehiculos
+    volumes:
+      - ./wallet:/wallet:ro
+    networks: [red-flota]
+
+  # ── Microservicio: Vehículos ───────────────────────────────────────────────
+  ms-vehiculos:
+    build: apps/backend/ms-vehiculos
+    ports: ["8082:8082"]
+    environment: &env-oracle
+      ORACLE_TNS_NAME:    ${ORACLE_TNS_NAME}
+      ORACLE_WALLET_PATH: /wallet
+      ORACLE_USUARIO:     ${ORACLE_USUARIO}
+      ORACLE_CLAVE:       ${ORACLE_CLAVE}
+      ORACLE_ESQUEMA:     ${ORACLE_ESQUEMA}
+      AZURE_B2C_TENANT:   ${AZURE_B2C_TENANT}
+    volumes:
+      - ./wallet:/wallet:ro
+    networks: [red-flota]
+
+  # ── Microservicio: Conductores ─────────────────────────────────────────────
+  ms-conductores:
+    build: apps/backend/ms-conductores
+    ports: ["8083:8083"]
+    environment: *env-oracle
+    volumes:
+      - ./wallet:/wallet:ro
+    networks: [red-flota]
+
+  # ── Microservicio: Taller ──────────────────────────────────────────────────
+  ms-taller:
+    build: apps/backend/ms-taller
+    ports: ["8084:8084"]
+    environment: *env-oracle
+    volumes:
+      - ./wallet:/wallet:ro
+    networks: [red-flota]
+
+  # ── Microservicio: Almacén ─────────────────────────────────────────────────
+  ms-almacen:
+    build: apps/backend/ms-almacen
+    ports: ["8085:8085"]
+    environment: *env-oracle
+    volumes:
+      - ./wallet:/wallet:ro
+    networks: [red-flota]
+
+  # ── Microservicio: Operaciones ─────────────────────────────────────────────
+  ms-operaciones:
+    build: apps/backend/ms-operaciones
+    ports: ["8086:8086"]
+    environment: *env-oracle
+    volumes:
+      - ./wallet:/wallet:ro
+    networks: [red-flota]
+
+  # ── Microservicio: Reportes ────────────────────────────────────────────────
+  ms-reportes:
+    build: apps/backend/ms-reportes
+    ports: ["8087:8087"]
+    environment: *env-oracle
+    volumes:
+      - ./wallet:/wallet:ro
+    networks: [red-flota]
+
+  # ── Web App Angular (build de producción) ─────────────────────────────────
+  web:
+    build: apps/web
+    ports: ["4200:80"]
+    depends_on: [bff-web]
+    networks: [red-flota]
+
+networks:
+  red-flota:
+    driver: bridge

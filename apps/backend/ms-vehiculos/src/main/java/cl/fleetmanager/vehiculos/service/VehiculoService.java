@@ -1,0 +1,91 @@
+package cl.fleetmanager.vehiculos.service;
+
+import cl.fleetmanager.vehiculos.dto.VehiculoDto;
+import cl.fleetmanager.vehiculos.entity.Vehiculo;
+import cl.fleetmanager.vehiculos.repository.VehiculoRepository;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.*;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class VehiculoService {
+
+    private final VehiculoRepository repositorio;
+
+    public Page<Vehiculo> obtenerTodos(String idEmpresa, String estado, String busqueda, int pagina, int tamano) {
+        return repositorio.buscarPorFiltros(
+            idEmpresa,
+            (estado   != null && !estado.isBlank())   ? estado   : null,
+            (busqueda != null && !busqueda.isBlank()) ? busqueda : null,
+            PageRequest.of(pagina, tamano, Sort.by("patente"))
+        );
+    }
+
+    public Vehiculo obtenerPorId(String id) {
+        return repositorio.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Vehículo no encontrado: " + id));
+    }
+
+    public Vehiculo obtenerPorQr(String codigoQr) {
+        return repositorio.findByQrCode(codigoQr)
+            .orElseThrow(() -> new EntityNotFoundException("QR no válido: " + codigoQr));
+    }
+
+    public Vehiculo crear(String idEmpresa, VehiculoDto datos) {
+        return repositorio.save(Vehiculo.builder()
+            .id(UUID.randomUUID().toString())
+            .empresaId(idEmpresa)
+            .patente(datos.getPatente())
+            .marca(datos.getMarca())
+            .modelo(datos.getModelo())
+            .anio(datos.getAnio())
+            .tipo(datos.getTipo())
+            .combustible(datos.getCombustible())
+            .estado(datos.getEstado())
+            .kmActuales(datos.getKmActuales())
+            .kmProximoServicio(datos.getKmProximoServicio())
+            .vencimientoRevision(datos.getVencimientoRevision())
+            .vencimientoPermiso(datos.getVencimientoPermiso())
+            .color(datos.getColor())
+            .numMotor(datos.getNumMotor())
+            .numChasis(datos.getNumChasis())
+            .qrCode(datos.getQrCode() != null ? datos.getQrCode() : UUID.randomUUID().toString())
+            .capacidadEstanque(datos.getCapacidadEstanque())
+            .taraKg(datos.getTaraKg())
+            .capacidadCargaKg(datos.getCapacidadCargaKg())
+            .build());
+    }
+
+    public Vehiculo actualizar(String id, VehiculoDto datos) {
+        Vehiculo v = obtenerPorId(id);
+        if (datos.getPatente()            != null) v.setPatente(datos.getPatente());
+        if (datos.getMarca()              != null) v.setMarca(datos.getMarca());
+        if (datos.getModelo()             != null) v.setModelo(datos.getModelo());
+        if (datos.getAnio()               != null) v.setAnio(datos.getAnio());
+        if (datos.getTipo()               != null) v.setTipo(datos.getTipo());
+        if (datos.getCombustible()        != null) v.setCombustible(datos.getCombustible());
+        if (datos.getEstado()             != null) v.setEstado(datos.getEstado());
+        if (datos.getKmActuales()         != null) v.setKmActuales(datos.getKmActuales());
+        if (datos.getKmProximoServicio()  != null) v.setKmProximoServicio(datos.getKmProximoServicio());
+        if (datos.getVencimientoRevision()!= null) v.setVencimientoRevision(datos.getVencimientoRevision());
+        if (datos.getVencimientoPermiso() != null) v.setVencimientoPermiso(datos.getVencimientoPermiso());
+        if (datos.getColor()              != null) v.setColor(datos.getColor());
+        if (datos.getQrCode()             != null) v.setQrCode(datos.getQrCode());
+        if (datos.getCapacidadEstanque()  != null) v.setCapacidadEstanque(datos.getCapacidadEstanque());
+        if (datos.getTaraKg()             != null) v.setTaraKg(datos.getTaraKg());
+        if (datos.getCapacidadCargaKg()   != null) v.setCapacidadCargaKg(datos.getCapacidadCargaKg());
+        return repositorio.save(v);
+    }
+
+    public void eliminar(String id) {
+        Vehiculo v = obtenerPorId(id);
+        v.setEliminado(1);
+        repositorio.save(v);
+    }
+}

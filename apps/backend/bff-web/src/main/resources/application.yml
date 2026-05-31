@@ -1,0 +1,62 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: bff-web
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://${AZURE_B2C_TENANT}.b2clogin.com/${AZURE_B2C_TENANT}.onmicrosoft.com/v2.0/
+          jwk-set-uri: https://${AZURE_B2C_TENANT}.b2clogin.com/${AZURE_B2C_TENANT}.onmicrosoft.com/discovery/v2.0/keys?p=B2C_1_susi
+
+  cloud:
+    gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:4200"
+              - "${URL_FRONTEND:https://truckmanager.azurecontainerapps.io}"
+            allowedMethods: ["GET","POST","PUT","PATCH","DELETE","OPTIONS"]
+            allowedHeaders: ["*"]
+            allowCredentials: true
+      routes:
+        - id: vehiculos
+          uri: http://${MS_VEHICULOS_HOST:localhost}:8082
+          predicates: [Path=/api/v1/vehiculos/**]
+        - id: gps
+          uri: http://${MS_VEHICULOS_HOST:localhost}:8082
+          predicates: [Path=/api/v1/gps/**]
+        - id: conductores
+          uri: http://${MS_CONDUCTORES_HOST:localhost}:8083
+          predicates: [Path=/api/v1/conductores/**]
+        - id: taller
+          uri: http://${MS_TALLER_HOST:localhost}:8084
+          predicates: [Path=/api/v1/ordenes-trabajo/**]
+        - id: tareas-definicion
+          uri: http://${MS_TALLER_HOST:localhost}:8084
+          predicates: [Path=/api/v1/tareas-definicion/**]
+        - id: almacen-repuestos
+          uri: http://${MS_ALMACEN_HOST:localhost}:8085
+          predicates: [Path=/api/v1/repuestos/**]
+        - id: almacen-movimientos
+          uri: http://${MS_ALMACEN_HOST:localhost}:8085
+          predicates: [Path=/api/v1/movimientos-stock/**]
+        - id: operaciones-combustible
+          uri: http://${MS_OPERACIONES_HOST:localhost}:8086
+          predicates: [Path=/api/v1/combustible/**]
+        - id: operaciones-servicios
+          uri: http://${MS_OPERACIONES_HOST:localhost}:8086
+          predicates: [Path=/api/v1/servicios/**]
+        - id: operaciones-clientes
+          uri: http://${MS_OPERACIONES_HOST:localhost}:8086
+          predicates: [Path=/api/v1/clientes/**]
+        - id: operaciones-facturas
+          uri: http://${MS_OPERACIONES_HOST:localhost}:8086
+          predicates: [Path=/api/v1/facturas/**]
+        - id: reportes
+          uri: http://${MS_REPORTES_HOST:localhost}:8087
+          predicates: [Path=/api/v1/reportes/**]

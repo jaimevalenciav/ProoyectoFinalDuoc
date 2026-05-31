@@ -1,0 +1,37 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: ms-almacen
+  datasource:
+    url: jdbc:oracle:thin:@${ORACLE_TNS_NAME}?TNS_ADMIN=${ORACLE_WALLET_PATH}
+    username: ${ORACLE_USUARIO}
+    password: ${ORACLE_CLAVE}
+    driver-class-name: oracle.jdbc.OracleDriver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.OracleDialect
+        default_schema: ${ORACLE_ESQUEMA:FLEETMANAGER}
+    show-sql: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://${AZURE_B2C_TENANT}.b2clogin.com/${AZURE_B2C_TENANT}.onmicrosoft.com/v2.0/
+          jwk-set-uri: https://${AZURE_B2C_TENANT}.b2clogin.com/${AZURE_B2C_TENANT}.onmicrosoft.com/discovery/v2.0/keys?p=B2C_1_susi
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

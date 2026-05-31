@@ -1,0 +1,17 @@
+-- ============================================================
+-- Gestión de Flota — Script 03: Tabla TAREAS_OT
+-- ============================================================
+
+CREATE TABLE TAREAS_OT (
+    ID              VARCHAR2(36)    DEFAULT SYS_GUID() PRIMARY KEY,
+    OT_ID           VARCHAR2(36)    NOT NULL,
+    DESCRIPCION     VARCHAR2(300)   NOT NULL,
+    COMPLETADA      NUMBER(1)       DEFAULT 0 NOT NULL,
+    ORDEN           NUMBER(3)       DEFAULT 0 NOT NULL,
+    COMPLETADA_AT   TIMESTAMP,
+    CREATED_AT      TIMESTAMP       DEFAULT SYSTIMESTAMP NOT NULL,
+    CONSTRAINT FK_TAR_OT          FOREIGN KEY (OT_ID) REFERENCES ORDENES_TRABAJO(ID) ON DELETE CASCADE,
+    CONSTRAINT CHK_TAR_COMPLETADA CHECK (COMPLETADA IN (0,1))
+);
+
+CREATE INDEX IDX_TAR_OT ON TAREAS_OT(OT_ID, ORDEN);
