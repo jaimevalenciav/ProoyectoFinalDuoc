@@ -1,6 +1,7 @@
 package cl.fleetmanager.almacen.service;
 
 import cl.fleetmanager.almacen.dto.AjusteStockDto;
+import cl.fleetmanager.almacen.dto.IngresoFacturaDto;
 import cl.fleetmanager.almacen.dto.RepuestoDto;
 import cl.fleetmanager.almacen.entity.MovimientoStock;
 import cl.fleetmanager.almacen.entity.Repuesto;
@@ -114,5 +115,48 @@ public class RepuestoService {
         Repuesto r = getById(id);
         r.setEliminado(1);
         repuestoRepo.save(r);
+    }
+
+    /** Procesa un ingreso completo (factura / guía de despacho) con múltiples líneas */
+    public java.util.Map<String, Object> ingresoFactura(String emp, IngresoFacturaDto dto) {
+        int cantMovimientos = 0;
+        java.math.BigDecimal totalDoc = java.math.BigDecimal.ZERO;
+
+        for (IngresoFacturaDto.LineaDto linea : dto.getLineas()) {
+            Repuesto r = getById(linea.getRepuestoId());
+            BigDecimal cantidad      = linea.getCantidad() != null ? linea.getCantidad() : BigDecimal.ONE;
+            BigDecimal precioUnit    = linea.getPrecioUnit() != null ? linea.getPrecioUnit() : BigDecimal.ZERO;
+            BigDecimal stockAnterior = r.getStockActual() != null ? r.getStockActual() : BigDecimal.ZERO;
+            BigDecimal costoLinea    = precioUnit.multiply(cantidad);
+
+            r.setStockActual(stockAnterior.add(cantidad));
+            if (precioUnit.compareTo(BigDecimal.ZERO) > 0) {
+                r.setPrecioUnitario(precioUnit);  // actualiza precio con el de la factura
+            }
+            r.setProveedor(dto.getProveedor());
+            repuestoRepo.save(r);
+
+            MovimientoStock mov = MovimientoStock.builder()
+                    .empresaId(emp)
+                    .repuesto(r)
+                    .tipo("ENTRADA")
+                    .cantidad(cantidad)
+                    .precioUnit(precioUnit)
+                    .stockAnterior(stockAnterior)
+                    .stockNuevo(r.getStockActual())
+                    .costoTotal(costoLinea)
+                    .referencia(dto.getProveedor())
+                    .documento(dto.getTipoDocumento() + " " + dto.getNumDocumento())
+                    .build();
+            movimientoRepo.save(mov);
+
+            totalDoc = totalDoc.add(costoLinea);
+            cantMovimientos++;
+        }
+
+        java.util.Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("movimientos", cantMovimientos);
+        result.put("totalCLP", totalDoc);
+        return result;
     }
 }

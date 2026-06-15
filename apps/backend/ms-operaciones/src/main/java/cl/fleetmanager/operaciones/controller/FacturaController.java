@@ -4,11 +4,16 @@ import cl.fleetmanager.operaciones.dto.FacturarDto;
 import cl.fleetmanager.operaciones.entity.Factura;
 import cl.fleetmanager.operaciones.entity.UsuarioSistema;
 import cl.fleetmanager.operaciones.repository.UsuarioRepository;
+import cl.fleetmanager.operaciones.service.FacturaPdfService;
 import cl.fleetmanager.operaciones.service.FacturaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 public class FacturaController {
 
     private final FacturaService    servicio;
+    private final FacturaPdfService pdfService;
     private final UsuarioRepository usuarioRepo;
 
     private String empresaId(Jwt jwt) {
@@ -55,5 +61,17 @@ public class FacturaController {
     @PostMapping("/{id}/anular")
     public Factura anular(@PathVariable String id) {
         return servicio.anular(id);
+    }
+
+    /** Genera y devuelve el PDF de una factura para visualización / reimpresión */
+    @GetMapping(value = "/{id}/pdf", produces = "application/pdf")
+    public ResponseEntity<byte[]> descargarPdf(@PathVariable String id) throws Exception {
+        byte[] pdf = pdfService.generar(id);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(
+            ContentDisposition.inline().filename("factura-" + id + ".pdf").build()
+        );
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 }

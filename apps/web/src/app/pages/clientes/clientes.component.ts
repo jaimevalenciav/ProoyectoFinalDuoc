@@ -11,6 +11,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { OperacionesService } from '@core/services/operaciones.service';
 import { DialogoService } from '@core/services/dialogo.service';
 import { Cliente } from '@core/models';
+import { rutValidator, procesarInputRut } from '@core/utils/rut.utils';
 
 @Component({
   selector: 'app-clientes',
@@ -120,7 +121,11 @@ import { Cliente } from '@core/models';
             <div class="dos-columnas">
               <mat-form-field appearance="fill">
                 <mat-label>RUT empresa</mat-label>
-                <input matInput formControlName="rut" placeholder="76.123.456-7" />
+                <input matInput formControlName="rut" placeholder="76.123.456-7"
+                       (input)="onRutInput($event)" />
+                @if (formulario.get('rut')?.hasError('rutInvalido') && formulario.get('rut')?.touched) {
+                  <mat-error>RUT inválido — revise el dígito verificador</mat-error>
+                }
               </mat-form-field>
               <mat-form-field appearance="fill">
                 <mat-label>Razón social</mat-label>
@@ -189,7 +194,7 @@ export class ClientesComponent implements OnInit {
   busqueda          = '';
 
   formulario = this.constructor_.group({
-    rut:            ['', Validators.required],
+    rut:            ['', [Validators.required, rutValidator]],
     razonSocial:    ['', Validators.required],
     direccion:      [''],
     repLegalNombre: [''],
@@ -199,14 +204,19 @@ export class ClientesComponent implements OnInit {
 
   ngOnInit() {
     this.cargar();
-    // RUT y razón social en mayúsculas para consistencia de datos
-    (['rut', 'razonSocial', 'repLegalNombre'] as const).forEach(campo => {
+    // Razón social y rep. legal en mayúsculas para consistencia de datos
+    (['razonSocial', 'repLegalNombre'] as const).forEach(campo => {
       this.formulario.get(campo)?.valueChanges.subscribe(v => {
         if (v && v !== v.toUpperCase()) {
           this.formulario.get(campo)?.setValue(v.toUpperCase(), { emitEvent: false });
         }
       });
     });
+  }
+
+  onRutInput(event: Event) {
+    const formatted = procesarInputRut(event);
+    this.formulario.get('rut')?.setValue(formatted, { emitEvent: true });
   }
 
   cargar() {

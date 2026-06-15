@@ -45,6 +45,10 @@ public class ConductorService {
             .categoriaLicencia(datos.getCategoriaLicencia())
             .vencimientoLicencia(datos.getVencimientoLicencia())
             .estado(datos.getEstado() != null ? datos.getEstado() : "ACTIVO")
+            .fotoBase64(datos.getFotoBase64())
+            .licenciaFrente(datos.getLicenciaFrente())
+            .licenciaReverso(datos.getLicenciaReverso())
+            .vencimientoCedula(datos.getVencimientoCedula())
             .build());
     }
 
@@ -57,6 +61,10 @@ public class ConductorService {
         if (datos.getCategoriaLicencia()  != null) c.setCategoriaLicencia(datos.getCategoriaLicencia());
         if (datos.getVencimientoLicencia()!= null) c.setVencimientoLicencia(datos.getVencimientoLicencia());
         if (datos.getEstado()             != null) c.setEstado(datos.getEstado());
+        if (datos.getFotoBase64()         != null) c.setFotoBase64(datos.getFotoBase64());
+        if (datos.getLicenciaFrente()     != null) c.setLicenciaFrente(datos.getLicenciaFrente());
+        if (datos.getLicenciaReverso()    != null) c.setLicenciaReverso(datos.getLicenciaReverso());
+        if (datos.getVencimientoCedula()  != null) c.setVencimientoCedula(datos.getVencimientoCedula());
         return repositorio.save(c);
     }
 

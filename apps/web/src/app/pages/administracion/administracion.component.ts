@@ -11,11 +11,16 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { AlmacenService } from '@core/services/almacen.service';
 import { TareasDefinicionService } from '@core/services/tareas-definicion.service';
 import { VehiculosMaestrosService } from '@core/services/vehiculos-maestros.service';
+import { UsuariosService, UsuarioDto } from '@core/services/usuarios.service';
+import { InvitacionesService, InvitacionResumen } from '@core/services/invitaciones.service';
+import { PerfilService, ETIQUETA_ROL } from '@core/services/perfil.service';
 import { DialogoService } from '@core/services/dialogo.service';
-import { Repuesto, TareaDefinicion, Sucursal, Municipalidad, Aseguradora, PlantaRevision } from '@core/models';
+import { Repuesto, TareaDefinicion, Sucursal, Municipalidad, Aseguradora, PlantaRevision, UsuarioSistema, RolUsuario } from '@core/models';
+import { rutValidator, procesarInputRut } from '@core/utils/rut.utils';
 
 @Component({
   selector: 'app-administracion',
@@ -24,7 +29,7 @@ import { Repuesto, TareaDefinicion, Sucursal, Municipalidad, Aseguradora, Planta
     CommonModule, FormsModule, ReactiveFormsModule,
     MatTabsModule, MatButtonModule, MatIconModule, MatInputModule,
     MatSelectModule, MatTableModule, MatProgressSpinnerModule,
-    MatSnackBarModule, MatChipsModule, MatSlideToggleModule,
+    MatSnackBarModule, MatChipsModule, MatSlideToggleModule, MatTooltipModule,
   ],
   template: `
     <div class="encabezado-pagina">
@@ -379,6 +384,151 @@ import { Repuesto, TareaDefinicion, Sucursal, Municipalidad, Aseguradora, Planta
         </div>
       </mat-tab>
 
+      <!-- ══════════ TAB: Usuarios del Sistema ══════════ -->
+      <mat-tab label="Usuarios del Sistema">
+        <div class="tab-contenido">
+          <div class="barra-acciones">
+            <span style="flex:1"></span>
+            <button class="btn-secondary" (click)="abrirGenerarInvitacion()" matTooltip="Genera un código para que un nuevo usuario se una a la empresa">
+              <mat-icon>send</mat-icon> Invitar usuario
+            </button>
+            <button class="btn-primary" (click)="abrirUsuario()">
+              <mat-icon>person_add</mat-icon> Nuevo usuario
+            </button>
+          </div>
+
+          <!-- Panel de invitaciones activas -->
+          @if (invitacionesActivas().length > 0) {
+            <div class="superficie invitaciones-panel">
+              <div class="invitaciones-titulo">
+                <mat-icon>link</mat-icon>
+                Invitaciones pendientes
+              </div>
+              @for (inv of invitacionesActivas(); track inv.token) {
+                <div class="invitacion-fila">
+                  <div style="flex:1">
+                    <div style="font-size:13px;font-weight:500">
+                      {{ etiquetaRol(inv.rol) }}
+                      @if (inv.nota) { <span style="color:var(--ink-soft);font-weight:400"> — {{ inv.nota }}</span> }
+                    </div>
+                    <div style="font-size:11px;color:var(--ink-soft)">
+                      Expira: {{ inv.expiresAt | date:'dd/MM/yyyy HH:mm' }}
+                    </div>
+                  </div>
+                  <button mat-icon-button (click)="copiarLinkInvitacion(inv)" matTooltip="Copiar link de invitación">
+                    <mat-icon>content_copy</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="revocarInvitacion(inv)" matTooltip="Revocar">
+                    <mat-icon>block</mat-icon>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+
+          @if (cargandoUsuarios()) {
+            <div class="spinner-centrado"><mat-spinner diameter="36" /></div>
+          } @else {
+            <div class="superficie" style="padding:0;overflow:hidden">
+              <table mat-table [dataSource]="usuarios()">
+                <ng-container matColumnDef="nombre">
+                  <th mat-header-cell *matHeaderCellDef>Usuario</th>
+                  <td mat-cell *matCellDef="let u">
+                    <div class="usuario-celda">
+                      <div class="usuario-avatar">{{ (u.nombre[0] ?? 'U').toUpperCase() }}</div>
+                      <div>
+                        <div style="font-weight:500">{{ u.nombre }}</div>
+                        <div style="font-size:11px;color:var(--ink-soft)">{{ u.email }}</div>
+                      </div>
+                    </div>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="rol">
+                  <th mat-header-cell *matHeaderCellDef>Rol</th>
+                  <td mat-cell *matCellDef="let u">
+                    <span class="pill" [ngClass]="claseRol(u.rol)">{{ etiquetaRol(u.rol) }}</span>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="activo">
+                  <th mat-header-cell *matHeaderCellDef>Estado</th>
+                  <td mat-cell *matCellDef="let u">
+                    <span [class]="u.activo === 1 ? 'pill pill-activo' : 'pill pill-fuera'">
+                      {{ u.activo === 1 ? 'Activo' : 'Inactivo' }}
+                    </span>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="acciones">
+                  <th mat-header-cell *matHeaderCellDef></th>
+                  <td mat-cell *matCellDef="let u" style="white-space:nowrap">
+                    <button mat-icon-button (click)="abrirUsuario(u)" matTooltip="Editar">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button
+                            (click)="toggleActivoUsuario(u)"
+                            [matTooltip]="u.activo === 1 ? 'Desactivar' : 'Activar'">
+                      <mat-icon>{{ u.activo === 1 ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+                    </button>
+                    <button mat-icon-button color="warn" (click)="eliminarUsuario(u)" matTooltip="Eliminar">
+                      <mat-icon>delete_outline</mat-icon>
+                    </button>
+                  </td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="colsUsuario"></tr>
+                <tr mat-row *matRowDef="let u; columns: colsUsuario;"></tr>
+              </table>
+              @if (usuarios().length === 0) {
+                <div class="estado-vacio-tabla">
+                  <mat-icon>people</mat-icon>
+                  <p>No hay usuarios registrados.</p>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </mat-tab>
+
+      <!-- ══════════ TAB: Parámetros del Sistema ══════════ -->
+      <mat-tab label="Parámetros del Sistema">
+        <div class="tab-contenido">
+          <div class="superficie param-card">
+            <div class="param-header">
+              <mat-icon>tune</mat-icon>
+              <div>
+                <div class="param-titulo">Alertas de vencimiento</div>
+                <div class="param-desc">Define con cuántos días de anticipación se mostrará la alerta de vencimiento próximo para los documentos de vehículos y conductores.</div>
+              </div>
+            </div>
+
+            <div class="param-campos">
+              <div class="param-fila">
+                <mat-icon>warning_amber</mat-icon>
+                <div class="param-etiqueta">
+                  <strong>Días de anticipación para alertas</strong>
+                  <span>Aplica a: licencia de conducir, cédula de identidad, permiso de circulación y revisión técnica</span>
+                </div>
+                <mat-form-field appearance="fill" style="width:120px">
+                  <mat-label>Días</mat-label>
+                  <input matInput type="number" [(ngModel)]="diasAlertaVencimiento" min="1" max="365" />
+                  <span matSuffix>días</span>
+                </mat-form-field>
+              </div>
+            </div>
+
+            <div class="param-acciones">
+              <button mat-flat-button class="btn-primary" (click)="guardarParametros()">
+                <mat-icon>save</mat-icon> Guardar parámetros
+              </button>
+              @if (parametrosGuardados()) {
+                <span class="param-guardado">
+                  <mat-icon style="color:#16a34a;font-size:16px">check_circle</mat-icon>
+                  Guardado
+                </span>
+              }
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
     </mat-tab-group>
 
     <!-- ══════════ MODAL: Artículo ══════════ -->
@@ -629,7 +779,11 @@ import { Repuesto, TareaDefinicion, Sucursal, Municipalidad, Aseguradora, Planta
             </mat-form-field>
             <mat-form-field appearance="fill" class="ancho-completo">
               <mat-label>RUT</mat-label>
-              <input matInput formControlName="rut" placeholder="Ej: 76.123.456-7" />
+              <input matInput formControlName="rut" placeholder="Ej: 76.123.456-7"
+                     (input)="onRutAsegInput($event)" />
+              @if (formAseg.get('rut')?.hasError('rutInvalido') && formAseg.get('rut')?.touched) {
+                <mat-error>RUT inválido — revise el dígito verificador</mat-error>
+              }
             </mat-form-field>
             <div style="display:flex;align-items:center;gap:12px;margin:8px 0 16px">
               <mat-slide-toggle formControlName="activa">Activa</mat-slide-toggle>
@@ -637,6 +791,104 @@ import { Repuesto, TareaDefinicion, Sucursal, Municipalidad, Aseguradora, Planta
             <div class="acciones-formulario">
               <button mat-button type="button" (click)="cerrarAseguradora()">Cancelar</button>
               <button mat-flat-button class="btn-principal" type="submit" [disabled]="formAseg.invalid || guardando()">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
+
+    <!-- ══════════ MODAL: Generar invitación ══════════ -->
+    @if (modalInvitacion()) {
+      <div class="capa-modal" (click)="cerrarGenerarInvitacion()">
+        <div class="panel-modal" style="max-width:440px" (click)="$event.stopPropagation()">
+          <h2>Generar invitación</h2>
+          <p style="font-size:13px;color:var(--ink-mid);margin-bottom:16px">
+            Se generará un link de registro único. Compártelo con el usuario que deseas invitar.
+          </p>
+          <form [formGroup]="formInvitacion" (ngSubmit)="generarInvitacion()">
+            <mat-form-field appearance="fill" class="ancho-completo">
+              <mat-label>Rol que se asignará</mat-label>
+              <mat-select formControlName="rol">
+                <mat-option value="SUPERVISOR_TALLER">Supervisor de Taller</mat-option>
+                <mat-option value="MECANICO_TALLER">Mecánico de Taller</mat-option>
+                <mat-option value="COMERCIAL">Comercial</mat-option>
+                <mat-option value="CONTABILIDAD">Contabilidad</mat-option>
+                <mat-option value="ADMIN">Administrador</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="fill" class="ancho-completo">
+              <mat-label>Correo del invitado (opcional)</mat-label>
+              <input matInput formControlName="emailSugerido" type="email" />
+            </mat-form-field>
+            <mat-form-field appearance="fill" class="ancho-completo">
+              <mat-label>Nota descriptiva (opcional)</mat-label>
+              <input matInput formControlName="nota" placeholder="Ej: Mecánico turno noche" />
+            </mat-form-field>
+            <mat-form-field appearance="fill" style="width:140px">
+              <mat-label>Vigencia (días)</mat-label>
+              <input matInput type="number" formControlName="diasVigencia" min="1" max="30" />
+            </mat-form-field>
+
+            @if (linkInvitacionGenerado()) {
+              <div class="link-generado">
+                <mat-icon>link</mat-icon>
+                <span class="link-texto">{{ linkInvitacionGenerado() }}</span>
+                <button mat-icon-button type="button" (click)="copiarLink(linkInvitacionGenerado())" matTooltip="Copiar">
+                  <mat-icon>content_copy</mat-icon>
+                </button>
+              </div>
+              <p style="font-size:12px;color:var(--ink-soft);text-align:center">
+                Comparte este link con el usuario. Solo puede usarse una vez.
+              </p>
+            }
+
+            <div class="acciones-formulario">
+              <button mat-button type="button" (click)="cerrarGenerarInvitacion()">Cerrar</button>
+              @if (!linkInvitacionGenerado()) {
+                <button mat-flat-button class="btn-principal" type="submit" [disabled]="formInvitacion.invalid || guardando()">
+                  Generar link
+                </button>
+              }
+            </div>
+          </form>
+        </div>
+      </div>
+    }
+
+    <!-- ══════════ MODAL: Usuario del Sistema ══════════ -->
+    @if (modalUsuario()) {
+      <div class="capa-modal" (click)="cerrarUsuario()">
+        <div class="panel-modal" style="max-width:480px" (click)="$event.stopPropagation()">
+          <h2>{{ idUsuario() ? 'Editar' : 'Nuevo' }} usuario</h2>
+          <form [formGroup]="formUsuario" (ngSubmit)="guardarUsuario()">
+            <mat-form-field appearance="fill" class="ancho-completo">
+              <mat-label>Nombre completo</mat-label>
+              <input matInput formControlName="nombre" />
+            </mat-form-field>
+            <mat-form-field appearance="fill" class="ancho-completo">
+              <mat-label>Correo electrónico</mat-label>
+              <input matInput formControlName="email" type="email" />
+              @if (formUsuario.get('email')?.hasError('email') && formUsuario.get('email')?.touched) {
+                <mat-error>Correo inválido</mat-error>
+              }
+            </mat-form-field>
+            <mat-form-field appearance="fill" class="ancho-completo">
+              <mat-label>Rol</mat-label>
+              <mat-select formControlName="rol">
+                <mat-option value="ADMIN">Administrador</mat-option>
+                <mat-option value="SUPERVISOR_TALLER">Supervisor de Taller</mat-option>
+                <mat-option value="MECANICO_TALLER">Mecánico de Taller</mat-option>
+                <mat-option value="COMERCIAL">Comercial</mat-option>
+                <mat-option value="CONTABILIDAD">Contabilidad</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="fill" class="ancho-completo">
+              <mat-label>Azure OID <span style="color:var(--ink-soft);font-size:11px">(opcional — se vincula al primer inicio de sesión)</span></mat-label>
+              <input matInput formControlName="azureOid" />
+            </mat-form-field>
+            <div class="acciones-formulario">
+              <button mat-button type="button" (click)="cerrarUsuario()">Cancelar</button>
+              <button mat-flat-button class="btn-principal" type="submit" [disabled]="formUsuario.invalid || guardando()">Guardar</button>
             </div>
           </form>
         </div>
@@ -694,15 +946,98 @@ import { Repuesto, TareaDefinicion, Sucursal, Municipalidad, Aseguradora, Planta
     .seccion-articulos { border:1px solid var(--slate-dark); border-radius:var(--radius-md); padding:12px 16px; display:flex; flex-direction:column; gap:8px; }
     .seccion-titulo { font-size:12px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
     .fila-articulo-edit { display:flex; align-items:center; gap:8px; }
+
+    /* ── Invitaciones ── */
+    .invitaciones-panel { margin-bottom: 16px; padding: 12px 16px; }
+    .invitaciones-titulo {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 700; color: var(--ink-soft);
+      text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px;
+      mat-icon { font-size: 16px; width: 16px; height: 16px; }
+    }
+    .invitacion-fila {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 0; border-top: 1px solid var(--slate-dark);
+    }
+    .link-generado {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--azul-50); border: 1px solid var(--azul-200);
+      border-radius: var(--radius-sm); padding: 10px 12px; margin: 12px 0;
+      mat-icon { color: var(--azul-500); flex-shrink: 0; }
+    }
+    .link-texto { flex: 1; font-size: 11px; color: var(--azul-700); word-break: break-all; font-family: monospace; }
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 0 16px; height: 36px; border-radius: var(--radius-md);
+      background: var(--slate); border: 1px solid var(--slate-dark);
+      color: var(--ink); font-size: 13px; font-weight: 500; cursor: pointer;
+      mat-icon { font-size: 18px; width: 18px; height: 18px; }
+      &:hover { background: var(--slate-dark); }
+    }
+
+    /* ── Usuarios del sistema ── */
+    .usuario-celda { display:flex; align-items:center; gap:10px; }
+    .usuario-avatar {
+      width:32px; height:32px; border-radius:50%;
+      background:var(--azul-500); color:#fff;
+      display:flex; align-items:center; justify-content:center;
+      font-size:13px; font-weight:700; flex-shrink:0;
+    }
+    .pill-rol-admin          { background:#dbeafe; color:#1d4ed8; }
+    .pill-rol-supervisor     { background:#ede9fe; color:#6d28d9; }
+    .pill-rol-mecanico       { background:#d1fae5; color:#065f46; }
+    .pill-rol-comercial      { background:#fef3c7; color:#92400e; }
+    .pill-rol-contabilidad   { background:#fce7f3; color:#9d174d; }
+
+    /* ── Parámetros del sistema ── */
+    .param-card { max-width: 680px; display: flex; flex-direction: column; gap: 24px; }
+    .param-header {
+      display: flex; align-items: flex-start; gap: 14px;
+      mat-icon { font-size: 28px; width: 28px; height: 28px; color: var(--azul-500); flex-shrink: 0; margin-top: 2px; }
+    }
+    .param-titulo { font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+    .param-desc { font-size: 13px; color: var(--ink-mid); line-height: 1.5; }
+    .param-campos { display: flex; flex-direction: column; gap: 12px; }
+    .param-fila {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px; background: var(--slate); border-radius: var(--radius-sm);
+      mat-icon { font-size: 20px; width: 20px; height: 20px; color: #D97706; flex-shrink: 0; }
+    }
+    .param-etiqueta {
+      flex: 1; display: flex; flex-direction: column; gap: 2px;
+      strong { font-size: 14px; color: var(--ink); }
+      span { font-size: 12px; color: var(--ink-soft); }
+    }
+    .param-acciones { display: flex; align-items: center; gap: 12px; }
+    .param-guardado {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 13px; color: #16a34a;
+    }
   `],
 })
 export class AdministracionComponent implements OnInit {
   private readonly almacenSvc  = inject(AlmacenService);
   private readonly tareasSvc   = inject(TareasDefinicionService);
   private readonly maestrosSvc = inject(VehiculosMaestrosService);
+  private readonly usuariosSvc     = inject(UsuariosService);
+  private readonly invitacionesSvc = inject(InvitacionesService);
+  private readonly perfilSvc       = inject(PerfilService);
   private readonly snack       = inject(MatSnackBar);
   private readonly fb          = inject(FormBuilder);
   private readonly dialogo     = inject(DialogoService);
+
+  // ── Parámetros del sistema ────────────────────────────────────
+  diasAlertaVencimiento = parseInt(localStorage.getItem('param_dias_vencimiento') ?? '30', 10);
+  parametrosGuardados   = signal(false);
+
+  guardarParametros() {
+    const dias = Math.max(1, Math.min(365, this.diasAlertaVencimiento || 30));
+    this.diasAlertaVencimiento = dias;
+    localStorage.setItem('param_dias_vencimiento', String(dias));
+    this.parametrosGuardados.set(true);
+    this.snack.open(`Parámetro guardado: ${dias} días de anticipación`, '', { duration: 3000 });
+    setTimeout(() => this.parametrosGuardados.set(false), 3000);
+  }
 
   // ── Repuestos ─────────────────────────────────────────────────
   repuestos    = signal<Repuesto[]>([]);
@@ -782,7 +1117,7 @@ export class AdministracionComponent implements OnInit {
 
   formAseg = this.fb.group({
     nombre: ['', Validators.required],
-    rut:    [''],
+    rut:    ['', rutValidator],
     activa: [true],
   });
 
@@ -799,6 +1134,178 @@ export class AdministracionComponent implements OnInit {
     activa:    [true],
   });
 
+  // ── Invitaciones ─────────────────────────────────────────────
+  invitacionesActivas = signal<InvitacionResumen[]>([]);
+  modalInvitacion     = signal(false);
+  linkInvitacionGenerado = signal('');
+
+  formInvitacion = this.fb.group({
+    rol:           ['MECANICO_TALLER', Validators.required],
+    emailSugerido: [''],
+    nota:          [''],
+    diasVigencia:  [7],
+  });
+
+  abrirGenerarInvitacion() {
+    this.linkInvitacionGenerado.set('');
+    this.formInvitacion.reset({ rol: 'MECANICO_TALLER', diasVigencia: 7 });
+    this.modalInvitacion.set(true);
+  }
+  cerrarGenerarInvitacion() { this.modalInvitacion.set(false); }
+
+  generarInvitacion() {
+    if (this.formInvitacion.invalid) return;
+    this.guardando.set(true);
+    const v = this.formInvitacion.value;
+    this.invitacionesSvc.crear({
+      rol: v.rol as RolUsuario,
+      emailSugerido: v.emailSugerido || undefined,
+      nota: v.nota || undefined,
+      diasVigencia: v.diasVigencia ?? 7,
+    }).subscribe({
+      next: (inv) => {
+        this.guardando.set(false);
+        const link = `${window.location.origin}/onboarding?invite=${inv.token}`;
+        this.linkInvitacionGenerado.set(link);
+        this.cargarInvitaciones();
+      },
+      error: () => {
+        this.guardando.set(false);
+        this.snack.open('Error al generar invitación', '', { duration: 3000 });
+      },
+    });
+  }
+
+  cargarInvitaciones() {
+    this.invitacionesSvc.listar().subscribe({
+      next: r => this.invitacionesActivas.set(r.filter(i => !i.usada)),
+      error: () => {},
+    });
+  }
+
+  copiarLinkInvitacion(inv: InvitacionResumen) {
+    const link = `${window.location.origin}/onboarding?invite=${inv.token}`;
+    this.copiarLink(link);
+  }
+
+  copiarLink(link: string) {
+    navigator.clipboard.writeText(link).then(() =>
+      this.snack.open('Link copiado al portapapeles', '', { duration: 2500 })
+    );
+  }
+
+  async revocarInvitacion(inv: InvitacionResumen) {
+    const ok = await this.dialogo.confirmarEliminar('¿Revocar esta invitación?', 'El link dejará de funcionar.');
+    if (!ok) return;
+    this.invitacionesSvc.revocar(inv.token).subscribe({
+      next: () => { this.cargarInvitaciones(); this.snack.open('Invitación revocada', '', { duration: 2500 }); },
+      error: () => this.snack.open('Error al revocar', '', { duration: 2500 }),
+    });
+  }
+
+  // ── Usuarios del Sistema ─────────────────────────────────────
+  usuarios       = signal<UsuarioSistema[]>([]);
+  cargandoUsuarios = signal(false);
+  modalUsuario   = signal(false);
+  idUsuario      = signal<string | null>(null);
+  colsUsuario    = ['nombre', 'rol', 'activo', 'acciones'];
+
+  formUsuario = this.fb.group({
+    nombre:   ['', Validators.required],
+    email:    ['', [Validators.required, Validators.email]],
+    rol:      ['MECANICO_TALLER' as RolUsuario, Validators.required],
+    azureOid: [''],
+  });
+
+  readonly ROLES_DISPONIBLES: RolUsuario[] = [
+    'ADMIN', 'SUPERVISOR_TALLER', 'MECANICO_TALLER', 'COMERCIAL', 'CONTABILIDAD',
+  ];
+
+  etiquetaRol(rol: RolUsuario): string {
+    return ETIQUETA_ROL[rol] ?? rol;
+  }
+
+  claseRol(rol: RolUsuario): string {
+    const map: Record<RolUsuario, string> = {
+      ADMIN:             'pill-rol-admin',
+      SUPERVISOR_TALLER: 'pill-rol-supervisor',
+      MECANICO_TALLER:   'pill-rol-mecanico',
+      COMERCIAL:         'pill-rol-comercial',
+      CONTABILIDAD:      'pill-rol-contabilidad',
+    };
+    return map[rol] ?? '';
+  }
+
+  cargarUsuarios() {
+    this.cargandoUsuarios.set(true);
+    this.usuariosSvc.listar().subscribe({
+      next: r => { this.usuarios.set(r); this.cargandoUsuarios.set(false); },
+      error: () => this.cargandoUsuarios.set(false),
+    });
+  }
+
+  abrirUsuario(u?: UsuarioSistema) {
+    this.idUsuario.set(u?.id ?? null);
+    if (u) {
+      this.formUsuario.patchValue({ nombre: u.nombre, email: u.email, rol: u.rol, azureOid: u.azureOid ?? '' });
+    } else {
+      this.formUsuario.reset({ rol: 'MECANICO_TALLER' });
+    }
+    this.modalUsuario.set(true);
+  }
+  cerrarUsuario() { this.modalUsuario.set(false); }
+
+  guardarUsuario() {
+    if (this.formUsuario.invalid) return;
+    this.guardando.set(true);
+    const v = this.formUsuario.value;
+    const dto: UsuarioDto = {
+      nombre: v.nombre!,
+      email:  v.email!,
+      rol:    v.rol as RolUsuario,
+      azureOid: v.azureOid || undefined,
+    };
+    const op = this.idUsuario()
+      ? this.usuariosSvc.actualizar(this.idUsuario()!, dto)
+      : this.usuariosSvc.crear(dto);
+    op.subscribe({
+      next: () => {
+        this.guardando.set(false);
+        this.cerrarUsuario();
+        this.cargarUsuarios();
+        this.snack.open('Usuario guardado', '', { duration: 2500 });
+      },
+      error: (e) => {
+        this.guardando.set(false);
+        const msg = e?.error?.message ?? 'Error al guardar usuario';
+        this.snack.open(msg, 'OK', { duration: 4000 });
+      },
+    });
+  }
+
+  toggleActivoUsuario(u: UsuarioSistema) {
+    const nuevoActivo = u.activo !== 1;
+    this.usuariosSvc.cambiarActivo(u.id, nuevoActivo).subscribe({
+      next: () => {
+        this.cargarUsuarios();
+        this.snack.open(nuevoActivo ? 'Usuario activado' : 'Usuario desactivado', '', { duration: 2500 });
+      },
+      error: () => this.snack.open('Error al cambiar estado', '', { duration: 2500 }),
+    });
+  }
+
+  async eliminarUsuario(u: UsuarioSistema) {
+    const ok = await this.dialogo.confirmarEliminar(
+      `¿Eliminar usuario "${u.nombre}"?`,
+      `Esta acción no se puede deshacer.`
+    );
+    if (!ok) return;
+    this.usuariosSvc.eliminar(u.id).subscribe({
+      next: () => { this.cargarUsuarios(); this.snack.open('Usuario eliminado', '', { duration: 2500 }); },
+      error: () => this.snack.open('Error al eliminar', '', { duration: 2500 }),
+    });
+  }
+
   ngOnInit() {
     this.cargarRepuestos();
     this.cargarTareas();
@@ -806,6 +1313,8 @@ export class AdministracionComponent implements OnInit {
     this.cargarMunicipalidades();
     this.cargarAseguradoras();
     this.cargarPlantas();
+    this.cargarUsuarios();
+    this.cargarInvitaciones();
   }
 
   // ── Repuestos CRUD ────────────────────────────────────────────
@@ -826,11 +1335,22 @@ export class AdministracionComponent implements OnInit {
   guardarRepuesto() {
     if (this.formRepuesto.invalid) return;
     this.guardando.set(true);
-    const dto = this.formRepuesto.value as any;
+    const v = this.formRepuesto.value as any;
+    // Convertir a número para el backend
+    const dto = {
+      ...v,
+      stockActual:    Number(v.stockActual ?? 0),
+      stockMinimo:    Number(v.stockMinimo ?? 1),
+      precioUnitario: Number(v.precioUnitario ?? 0),
+    };
     const op = this.idRepuesto() ? this.almacenSvc.update(this.idRepuesto()!, dto) : this.almacenSvc.create(dto);
     op.subscribe({
       next: () => { this.guardando.set(false); this.cerrarRepuesto(); this.cargarRepuestos(); this.snack.open('Guardado', '', { duration: 2500 }); },
-      error: () => { this.guardando.set(false); this.snack.open('Error al guardar', '', { duration: 2500 }); },
+      error: (e) => {
+        this.guardando.set(false);
+        const msg = e?.error?.message ?? e?.error?.detail ?? e?.message ?? 'Error al guardar artículo';
+        this.snack.open(msg, 'OK', { duration: 5000 });
+      },
     });
   }
 
@@ -985,6 +1505,11 @@ export class AdministracionComponent implements OnInit {
     this.modalAseg.set(true);
   }
   cerrarAseguradora() { this.modalAseg.set(false); }
+
+  onRutAsegInput(event: Event) {
+    const formatted = procesarInputRut(event);
+    this.formAseg.get('rut')?.setValue(formatted, { emitEvent: true });
+  }
 
   guardarAseguradora() {
     if (this.formAseg.invalid) return;

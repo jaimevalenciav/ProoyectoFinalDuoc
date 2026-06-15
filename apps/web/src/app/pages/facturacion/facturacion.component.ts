@@ -308,6 +308,9 @@ import { Servicio, Cliente, Factura } from '@core/models';
             <ng-container matColumnDef="acciones">
               <th mat-header-cell *matHeaderCellDef></th>
               <td mat-cell *matCellDef="let f" class="columna-acciones">
+                <button mat-icon-button (click)="verPdf(f.id)" matTooltip="Ver / Imprimir PDF">
+                  <mat-icon>picture_as_pdf</mat-icon>
+                </button>
                 @if (f.estado !== 'ANULADA') {
                   <button mat-icon-button color="warn" (click)="anularFactura(f)" matTooltip="Anular factura">
                     <mat-icon>cancel</mat-icon>
@@ -628,7 +631,10 @@ export class FacturacionComponent implements OnInit {
         this.facturando.set(false);
         this.cerrarDialogoFacturar();
         this.limpiarSeleccion();
-        this.snack.open(`Factura ${f.numFactura} emitida correctamente`, '', { duration: 4000 });
+        this.snack.open(`Factura ${f.numFactura} emitida correctamente`, 'Ver PDF', { duration: 6000 })
+          .onAction().subscribe(() => this.verPdf(f.id));
+        // Abrir PDF automáticamente en nueva pestaña
+        this.verPdf(f.id);
         this.cargarServicios();
         this.pestanaActiva.set('facturas');
         this.cargarFacturas();
@@ -639,6 +645,11 @@ export class FacturacionComponent implements OnInit {
         this.snack.open(msg, 'Cerrar', { duration: 5000 });
       },
     });
+  }
+
+  // ── PDF ───────────────────────────────────────────────────
+  verPdf(facturaId: string): void {
+    window.open(`http://localhost:8080/api/v1/facturas/${facturaId}/pdf`, '_blank');
   }
 
   // ── Anular factura ────────────────────────────────────────

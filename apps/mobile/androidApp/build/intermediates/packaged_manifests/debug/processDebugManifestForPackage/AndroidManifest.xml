@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="cl.truckmanager.android"
+    android:versionCode="1"
+    android:versionName="1.0.0" >
+
+    <uses-sdk
+        android:minSdkVersion="26"
+        android:targetSdkVersion="35" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="true" />
+
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!--
+     Required for API Level 30 to make sure we can detect browsers and other apps we want to
+     be able to talk to.
+    -->
+    <!-- https://developer.android.com/training/basics/intents/package-visibility-use-cases -->
+    <queries>
+        <package android:name="com.azure.authenticator" />
+        <package android:name="com.microsoft.identity.testuserapp" />
+        <package android:name="com.microsoft.windowsintune.companyportal" />
+        <package android:name="com.microsoft.mockauthapp" />
+        <package android:name="com.microsoft.mockcp" />
+        <package android:name="com.microsoft.mockltw" />
+        <package android:name="com.microsoft.appmanager" />
+        <!--
+        Required for API Level 30 to make sure we can detect browsers
+        (that don't support custom tabs)
+        -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+
+            <category android:name="android.intent.category.BROWSABLE" />
+
+            <data android:scheme="https" />
+        </intent>
+        <!-- Required for API Level 30 to make sure we can detect browsers that support custom tabs -->
+        <!-- https://developers.google.com/web/updates/2020/07/custom-tabs-android-11#detecting_browsers_that_support_custom_tabs -->
+        <intent>
+            <action android:name="android.support.customtabs.action.CustomTabsService" />
+        </intent>
+    </queries>
+
+    <permission
+        android:name="cl.truckmanager.android.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+        android:protectionLevel="signature" />
+
+    <uses-permission android:name="cl.truckmanager.android.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+    <uses-permission android:name="android.permission.NFC" />
+
+    <uses-feature
+        android:name="android.hardware.usb.host"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.nfc"
+        android:required="false" />
+
+    <application
+        android:name="cl.truckmanager.android.TruckManagerApp"
+        android:allowBackup="true"
+        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+        android:debuggable="true"
+        android:extractNativeLibs="false"
+        android:label="TruckManager"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.TruckManager" >
+        <activity
+            android:name="cl.truckmanager.android.MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name="cl.truckmanager.android.service.ServicioRastreoGps"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+
+        <!-- MSAL BrowserTabActivity: tools:node="replace" evita duplicado con la manifest interna de MSAL -->
+        <activity
+            android:name="com.microsoft.identity.client.BrowserTabActivity"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="cl.truckmanager.android"
+                    android:scheme="msauth" />
+            </intent-filter>
+        </activity>
+        <!-- MSAL activity that will be used to process all the auth related logic -->
+        <activity
+            android:name="com.microsoft.identity.common.internal.providers.oauth2.AuthorizationActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize|smallestScreenSize|screenLayout|keyboard"
+            android:exported="false"
+            android:launchMode="singleTask" />
+        <activity
+            android:name="com.microsoft.identity.common.internal.providers.oauth2.CurrentTaskAuthorizationActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize|smallestScreenSize|screenLayout|keyboard"
+            android:exported="false"
+            android:launchMode="standard" /> <!-- Helper activity for displaying current broker redirect URI configuration -->
+        <activity
+            android:name="com.microsoft.identity.client.helper.BrokerHelperActivity"
+            android:exported="false"
+            android:launchMode="standard" />
+        <activity
+            android:name="com.microsoft.identity.client.CurrentTaskBrowserTabActivity"
+            android:exported="true" />
+
+        <service
+            android:name="androidx.camera.core.impl.MetadataHolderService"
+            android:enabled="false"
+            android:exported="false" >
+            <meta-data
+                android:name="androidx.camera.core.impl.MetadataHolderService.DEFAULT_CONFIG_PROVIDER"
+                android:value="androidx.camera.camera2.Camera2Config$DefaultProvider" />
+        </service> <!-- Activity to invoke an interactive request to the intent passed by ad-accounts(Broker) -->
+        <activity
+            android:name="com.microsoft.identity.common.internal.broker.BrokerActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize|screenLayout|keyboard" /> <!-- Activity to launch a install WPJ certificate activity and get the result -->
+        <activity
+            android:name="com.microsoft.identity.common.internal.broker.InstallCertActivityLauncher"
+            android:configChanges="orientation|keyboardHidden|screenSize|screenLayout|keyboard"
+            android:theme="@style/Theme.AppCompat.Light" />
+
+        <service
+            android:name="com.google.mlkit.common.internal.MlKitComponentDiscoveryService"
+            android:directBootAware="true"
+            android:exported="false" >
+            <meta-data
+                android:name="com.google.firebase.components:com.google.mlkit.vision.barcode.internal.BarcodeRegistrar"
+                android:value="com.google.firebase.components.ComponentRegistrar" />
+            <meta-data
+                android:name="com.google.firebase.components:com.google.mlkit.vision.common.internal.VisionCommonRegistrar"
+                android:value="com.google.firebase.components.ComponentRegistrar" />
+            <meta-data
+                android:name="com.google.firebase.components:com.google.mlkit.common.internal.CommonComponentRegistrar"
+                android:value="com.google.firebase.components.ComponentRegistrar" />
+        </service>
+
+        <provider
+            android:name="com.google.mlkit.common.internal.MlKitInitProvider"
+            android:authorities="cl.truckmanager.android.mlkitinitprovider"
+            android:exported="false"
+            android:initOrder="99" />
+
+        <activity
+            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+
+        <activity
+            android:name="androidx.compose.ui.tooling.PreviewActivity"
+            android:exported="true" />
+
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="cl.truckmanager.android.androidx-startup"
+            android:exported="false" >
+            <meta-data
+                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+                android:value="androidx.startup" />
+            <meta-data
+                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+                android:value="androidx.startup" />
+            <meta-data
+                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+                android:value="androidx.startup" />
+        </provider>
+
+        <service
+            android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
+            android:exported="false" >
+            <meta-data
+                android:name="backend:com.google.android.datatransport.cct.CctBackendFactory"
+                android:value="cct" />
+        </service>
+        <service
+            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" >
+        </service>
+
+        <receiver
+            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver"
+            android:exported="false" />
+        <receiver
+            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+            android:directBootAware="false"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.DUMP" >
+            <intent-filter>
+                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+            </intent-filter>
+        </receiver>
+
+        <activity
+            android:name="com.yubico.yubikit.android.ui.OtpActivity"
+            android:excludeFromRecents="true"
+            android:label="@string/yubikit_otp_activity_title"
+            android:theme="@style/YubiKitPromptDialogTheme" />
+        <activity
+            android:name="com.yubico.yubikit.android.ui.YubiKeyPromptActivity"
+            android:excludeFromRecents="true"
+            android:label="@string/yubikit_prompt_activity_title"
+            android:theme="@style/YubiKitPromptDialogTheme" />
+    </application>
+
+</manifest>

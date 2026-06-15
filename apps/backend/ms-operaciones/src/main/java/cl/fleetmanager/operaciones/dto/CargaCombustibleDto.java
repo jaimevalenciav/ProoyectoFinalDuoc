@@ -15,4 +15,5 @@ public class CargaCombustibleDto {
     private BigDecimal litros;
     private BigDecimal precioLitro;
     private Long kmVehiculo;
+    private String tipoCombustible;
 }

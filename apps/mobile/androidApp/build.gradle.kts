@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.compose)
+    alias(libs.plugins.composeKotlinPlugin)
 }
 
 kotlin {
@@ -15,7 +16,7 @@ kotlin {
         androidMain.dependencies {
             implementation(projects.shared)
             // Compose
-            implementation(platform(libs.compose.bom))
+            implementation(platform("androidx.compose:compose-bom:2024.09.02"))
             implementation(libs.compose.ui)
             implementation(libs.compose.ui.tooling)
             implementation(libs.compose.material3)
@@ -38,15 +39,24 @@ kotlin {
             implementation(libs.play.services.location)
             // Coroutines
             implementation(libs.kotlinx.coroutines.android)
+            // Ktor engine (Android)
+            implementation(libs.ktor.client.android.engine)
+            // Accompanist permissions (camera)
+            implementation(libs.accompanist.permissions)
         }
     }
 }
 
+// Workaround: MSAL 4.9.0 pulls opentelemetry-bom as a library (not platform), causing variant mismatch
+configurations.configureEach {
+    exclude(group = "io.opentelemetry", module = "opentelemetry-bom")
+}
+
 android {
-    namespace = "cl.fleetmanager.android"
+    namespace = "cl.truckmanager.android"
     compileSdk = 35
     defaultConfig {
-        applicationId = "cl.fleetmanager.android"
+        applicationId = "cl.truckmanager.android"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

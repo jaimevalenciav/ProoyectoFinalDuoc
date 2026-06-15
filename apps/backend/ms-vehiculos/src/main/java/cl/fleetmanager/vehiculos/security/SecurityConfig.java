@@ -19,7 +19,7 @@ public class SecurityConfig {
             .csrf(c -> c.disable())
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
-            .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {}))
+            // Sin oauth2ResourceServer: el gateway (bff-web) ya validó el JWT.
             .build();
     }
 }

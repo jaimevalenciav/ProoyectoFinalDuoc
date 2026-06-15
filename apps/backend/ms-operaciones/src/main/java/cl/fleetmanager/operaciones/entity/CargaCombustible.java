@@ -51,6 +51,9 @@ public class CargaCombustible {
     @Column(name = "CONSUMO_100KM", precision = 6, scale = 2)
     private BigDecimal consumo100km;
 
+    @Column(name = "TIPO_COMBUSTIBLE", length = 30)
+    private String tipoCombustible;
+
     @Column(name = "CREATED_AT", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 }

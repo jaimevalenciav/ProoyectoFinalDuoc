@@ -118,8 +118,9 @@ public class Vehiculo {
         if (estado == null)      estado      = "OPERATIVO";
         if (combustible == null) combustible = "DIESEL";
         if (eliminado == null)   eliminado   = 0;
-        if (kmActuales == null)  kmActuales  = 0L;
-        if (usaAdBlue == null)   usaAdBlue   = 0;
+        if (kmActuales == null)         kmActuales         = 0L;
+        if (kmProximoServicio == null)  kmProximoServicio  = 0L;
+        if (usaAdBlue == null)          usaAdBlue          = 0;
         createdAt = updatedAt = LocalDateTime.now();
     }
 

@@ -11,14 +11,31 @@ export interface Empresa {
 }
 
 // ─── Usuario ─────────────────────────────────────────────────
+export type RolUsuario =
+  | 'ADMIN'
+  | 'SUPERVISOR_TALLER'
+  | 'MECANICO_TALLER'
+  | 'COMERCIAL'
+  | 'CONTABILIDAD';
+
 export interface UsuarioSistema {
   id: string;
   empresaId: string;
   azureOid?: string;
   nombre: string;
   email: string;
-  rol: 'ADMIN' | 'SUPERVISOR' | 'JEFE_TALLER' | 'OPERADOR' | 'CONDUCTOR' | 'BODEGA';
-  activo: boolean;
+  rol: RolUsuario;
+  /** 1 = activo, 0 = inactivo (coincide con backend Integer) */
+  activo: number;
+}
+
+export interface PerfilUsuario {
+  id: string;
+  nombre: string;
+  email: string;
+  rol: RolUsuario;
+  empresaId: string;
+  activo: number;
 }
 
 // ─── Vehículo ────────────────────────────────────────────────
@@ -89,6 +106,10 @@ export interface Conductor {
   email?: string;
   categoriaLicencia: string;
   vencimientoLicencia: string;
+  vencimientoCedula?: string;
+  fotoBase64?: string;
+  licenciaFrente?: string;
+  licenciaReverso?: string;
   estado: EstadoConductor;
   scoreConduccion: number;
   horasMes: number;
@@ -105,6 +126,10 @@ export interface ConductorRequest {
   email?: string;
   categoriaLicencia: string;
   vencimientoLicencia: string;
+  vencimientoCedula?: string;
+  fotoBase64?: string;
+  licenciaFrente?: string;
+  licenciaReverso?: string;
   estado: EstadoConductor;
 }
 
@@ -501,6 +526,23 @@ export interface DashboardKpis {
   alertasCriticas: number;
   kmFlotaMes: number;
   costoMes: number;
+}
+
+// ─── Mecánico ────────────────────────────────────────────────
+export interface Mecanico {
+  id: string;
+  empresaId: string;
+  nombre: string;
+  rut?: string;
+  /** MECANICO_GENERAL | ELECTRICO | NEUMATICOS | CARROCERIA | HIDRAULICA */
+  especialidad?: string;
+  telefono?: string;
+  email?: string;
+  /** 1 = activo, 0 = inactivo */
+  activo: number;
+  observacion?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface PagedResponse<T> {

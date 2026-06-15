@@ -21,6 +21,20 @@ interface AlertaFormulario {
   mensaje: string;
 }
 
+const TIPOS_COMBUSTIBLE = [
+  'Diesel', 'Ben97', 'Ben95', 'Ben93', 'Kerosene',
+  'Carga Eléctrica', 'Hidrógeno', 'Gas', 'AdBlue',
+] as const;
+
+type TipoCombustible = typeof TIPOS_COMBUSTIBLE[number];
+
+/** Unidad de volumen según tipo */
+function unidadTipo(tipo: TipoCombustible): string {
+  if (tipo === 'Carga Eléctrica') return 'kWh';
+  if (tipo === 'Hidrógeno' || tipo === 'Gas') return 'kg';
+  return 'L';
+}
+
 @Component({
   selector: 'app-combustible',
   standalone: true,
@@ -112,23 +126,37 @@ interface AlertaFormulario {
       </div>
     }
 
-    <!-- Banner anomalías de consumo -->
-    @if (anomalias().length > 0 && alertasActivas().length === 0) {
-      <div class="banner-anomalias">
-        <div class="banner-cabecera">
-          <mat-icon>warning_amber</mat-icon>
-          <strong>{{ anomalias().length }} anomalía{{ anomalias().length > 1 ? 's' : '' }} de consumo detectada{{ anomalias().length > 1 ? 's' : '' }}</strong>
+    <!-- Banner anomalías de consumo sin alerta en BD -->
+    @if (anomaliasVisibles().length > 0) {
+      <div class="panel-alertas panel-alertas-warning">
+        <div class="alertas-cabecera alertas-cabecera-warning">
+          <div style="display:flex;align-items:center;gap:8px">
+            <mat-icon class="icono-alerta-panel">warning_amber</mat-icon>
+            <span class="titulo-alertas">
+              {{ anomaliasVisibles().length }} anomalía{{ anomaliasVisibles().length > 1 ? 's' : '' }} de consumo detectada{{ anomaliasVisibles().length > 1 ? 's' : '' }}
+            </span>
+          </div>
         </div>
-        <div class="lista-anomalias">
-          @for (a of anomalias(); track a.id) {
-            <div class="item-anomalia">
-              <mat-icon class="icono-anomalia">directions_bus</mat-icon>
-              <span>
-                <strong>{{ patenteVehiculo(a.vehiculoId) }}</strong> —
-                {{ a.fechaCarga | date:'dd/MM/yyyy' }} —
-                <span [class]="claseConsumo(a.consumo100km!)">{{ a.consumo100km | number:'1.1-1' }} L/100km</span>
-                ({{ a.litros | number:'1.0-0' }} L · {{ a.kmVehiculo | number:'1.0-0' }} km)
-              </span>
+        <div class="lista-alertas-panel">
+          @for (a of anomaliasVisibles(); track a.id) {
+            <div class="tarjeta-alerta tarjeta-warning">
+              <div class="alerta-izq">
+                <span class="badge-tipo badge-tipo-warning">AVISO</span>
+                <mat-icon class="alerta-icono-mat">directions_bus</mat-icon>
+                <div class="alerta-cuerpo">
+                  <span class="alerta-patente">{{ patenteVehiculo(a.vehiculoId) }}</span>
+                  <span class="alerta-mensaje">
+                    Consumo anómalo:
+                    <span [class]="claseConsumo(a.consumo100km!)">{{ a.consumo100km | number:'1.1-1' }} L/100km</span>
+                    — {{ a.litros | number:'1.0-0' }} L · {{ a.kmVehiculo | number:'1.0-0' }} km
+                  </span>
+                  <span class="alerta-fecha">{{ a.fechaCarga | date:'dd/MM/yyyy' }}</span>
+                </div>
+              </div>
+              <button class="btn-leido" (click)="descartarAnomalia(a)" [disabled]="procesandoLeida()">
+                <mat-icon>done</mat-icon>
+                Leído
+              </button>
             </div>
           }
         </div>
@@ -168,6 +196,14 @@ interface AlertaFormulario {
           <ng-container matColumnDef="fechaCarga">
             <th mat-header-cell *matHeaderCellDef>Fecha</th>
             <td mat-cell *matCellDef="let c">{{ c.fechaCarga | date:'dd/MM/yyyy' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="tipo">
+            <th mat-header-cell *matHeaderCellDef>Tipo</th>
+            <td mat-cell *matCellDef="let c">
+              <span [class]="'chip-tipo chip-tipo-' + slugTipo(c.tipoCombustible)">
+                {{ c.tipoCombustible || 'Diesel' }}
+              </span>
+            </td>
           </ng-container>
           <ng-container matColumnDef="vehiculo">
             <th mat-header-cell *matHeaderCellDef>Vehículo</th>
@@ -228,6 +264,19 @@ interface AlertaFormulario {
         <div class="panel-modal" style="width:560px;max-height:92vh;overflow-y:auto" (click)="$event.stopPropagation()">
           <h2>Registrar carga de combustible</h2>
 
+          <!-- ── Selector de tipo de combustible ── -->
+          <div class="bloque-tipo-comb">
+            <label class="etiqueta-tipo-comb">Tipo de combustible</label>
+            <div class="grilla-tipos">
+              @for (t of tiposCombustible; track t) {
+                <button type="button"
+                  [class.tipo-activo]="tipoCombustible() === t"
+                  class="btn-tipo"
+                  (click)="seleccionarTipo(t)">{{ t }}</button>
+              }
+            </div>
+          </div>
+
           <form [formGroup]="formulario" (ngSubmit)="guardar()">
 
             <!-- Vehículo -->
@@ -287,9 +336,9 @@ interface AlertaFormulario {
             <!-- Litros y precio -->
             <div class="dos-columnas">
               <mat-form-field appearance="fill">
-                <mat-label>Litros cargados *</mat-label>
+                <mat-label>{{ tipoCombustible() === 'Carga Eléctrica' ? 'kWh cargados' : tipoCombustible() === 'Hidrógeno' || tipoCombustible() === 'Gas' ? 'kg cargados' : 'Litros cargados' }} *</mat-label>
                 <input matInput type="number" step="0.1" formControlName="litros" (input)="recalcularAlertas()" />
-                <span matSuffix>L</span>
+                <span matSuffix>{{ unidadActual() }}</span>
               </mat-form-field>
               <mat-form-field appearance="fill">
                 <mat-label>Precio por litro (CLP) *</mat-label>
@@ -379,9 +428,11 @@ interface AlertaFormulario {
       gap: 12px;
       &:last-child { border-bottom: none; }
     }
-    .tarjeta-warning { border-left: 4px solid #C25E01; }
+    .tarjeta-warning { border-left: 4px solid #D97706; }
     .tarjeta-info    { border-left: 4px solid #007AF5; }
     .tarjeta-error   { border-left: 4px solid #C10A5A; }
+    .panel-alertas-warning { border-color: #D97706; }
+    .alertas-cabecera-warning { background: #D97706; }
 
     .alerta-izq { display: flex; align-items: flex-start; gap: 10px; flex: 1; }
     .alerta-icono-mat { font-size: 18px; width: 18px; height: 18px; color: var(--ink-soft); flex-shrink: 0; margin-top: 2px; }
@@ -447,25 +498,7 @@ interface AlertaFormulario {
       mat-icon { color: #16a34a; }
     }
 
-    /* ── Banner anomalías ─────────────────────────────────── */
-    .banner-anomalias {
-      background: #FFFBEB; border: 1px solid #F59E0B;
-      border-radius: var(--radius-md); padding: 14px 16px;
-      margin-bottom: 20px;
-    }
-    .banner-cabecera {
-      display: flex; align-items: center; gap: 8px;
-      color: #92400E; font-size: 14px; margin-bottom: 10px;
-      mat-icon { color: #D97706; }
-    }
-    .lista-anomalias { display: flex; flex-direction: column; gap: 6px; }
-    .item-anomalia {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 13px; color: #78350F;
-      padding: 4px 0 4px 4px;
-      border-top: 1px solid rgba(245,158,11,.2);
-    }
-    .icono-anomalia { font-size: 16px; width: 16px; height: 16px; color: #D97706; flex-shrink: 0; }
+    /* (banner-anomalias replaced by panel-alertas-warning) */
 
     /* ── Tabla ────────────────────────────────────────────── */
     .celda-patente { font-weight: 700; font-size: 14px; }
@@ -516,6 +549,66 @@ interface AlertaFormulario {
     }
     .total-estimado.rend-malo  { background: #FEF2F2; border-color: #FECACA; color: #991B1B; mat-icon { color: #DC2626; } }
     .total-estimado.rend-medio { background: #FFFBEB; border-color: #FDE68A; color: #92400E; mat-icon { color: #D97706; } }
+
+    /* ── Selector tipo combustible ──────────────────────────── */
+    .bloque-tipo-comb {
+      margin-bottom: 18px;
+    }
+    .etiqueta-tipo-comb {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ink-soft);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 8px;
+    }
+    .grilla-tipos {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+    .btn-tipo {
+      padding: 5px 13px;
+      border-radius: 6px;
+      border: 1.5px solid #1B2C40;
+      background: #fff;
+      color: #1B2C40;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: var(--fuente);
+      cursor: pointer;
+      transition: background .15s, color .15s, transform .1s;
+      white-space: nowrap;
+      &:hover:not(.tipo-activo) {
+        background: rgba(27,44,64,.07);
+      }
+    }
+    .tipo-activo {
+      background: #1B2C40 !important;
+      color: #fff !important;
+      border-color: #1B2C40 !important;
+    }
+
+    /* ── Chip tipo en tabla ─────────────────────────────────── */
+    .chip-tipo {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+      background: rgba(27,44,64,.1);
+      color: #1B2C40;
+    }
+    .chip-tipo-adblue       { background: #EFF6FF; color: #1D4ED8; }
+    .chip-tipo-carga-electrica { background: #F0FDF4; color: #166534; }
+    .chip-tipo-hidrogeno    { background: #F0F9FF; color: #0369A1; }
+    .chip-tipo-gas          { background: #FEFCE8; color: #92400E; }
+    .chip-tipo-kerosene     { background: #FDF4FF; color: #7E22CE; }
+    .chip-tipo-ben97        { background: #FFF7ED; color: #C2410C; }
+    .chip-tipo-ben95        { background: #FFF7ED; color: #D97706; }
+    .chip-tipo-ben93        { background: #FEF9C3; color: #854D0E; }
   `],
 })
 export class CombustibleComponent implements OnInit {
@@ -526,8 +619,10 @@ export class CombustibleComponent implements OnInit {
   private readonly snack        = inject(MatSnackBar);
   private readonly dialogo      = inject(DialogoService);
 
-  columnas = ['numDocumento', 'fechaCarga', 'vehiculo', 'litros', 'precioLitro', 'costoTotal', 'kmVehiculo', 'rendimiento', 'acciones'];
+  readonly tiposCombustible = TIPOS_COMBUSTIBLE;
+  columnas = ['numDocumento', 'fechaCarga', 'tipo', 'vehiculo', 'litros', 'precioLitro', 'costoTotal', 'kmVehiculo', 'rendimiento', 'acciones'];
 
+  tipoCombustible   = signal<TipoCombustible>('Diesel');
   cargando          = signal(true);
   guardando         = signal(false);
   procesandoLeida   = signal(false);
@@ -541,6 +636,22 @@ export class CombustibleComponent implements OnInit {
   alertasFormulario = signal<AlertaFormulario[]>([]);
   alertasActivas    = signal<AlertaCombustible[]>([]);
   alertasHistorial  = signal<AlertaCombustible[]>([]);
+
+  /** IDs de anomalías descartadas manualmente (persiste en localStorage) */
+  private readonly DISMISSED_KEY = 'fm_anomalias_descartadas';
+  dismissedIds = signal<Set<string>>(
+    new Set<string>(JSON.parse(localStorage.getItem('fm_anomalias_descartadas') ?? '[]'))
+  );
+
+  /**
+   * Anomalías que aún no han sido descartadas y no tienen alerta activa en BD
+   * con el mismo cargaId (evita duplicados entre ambos paneles).
+   */
+  anomaliasVisibles = computed(() => {
+    const dismissed    = this.dismissedIds();
+    const alertaCargaIds = new Set(this.alertasActivas().map(a => a.cargaId));
+    return this.anomalias().filter(a => !dismissed.has(a.id) && !alertaCargaIds.has(a.id));
+  });
 
   // ID de la última carga recién guardada (para asociar alertas)
   private ultimaCargaId: string | null = null;
@@ -570,6 +681,8 @@ export class CombustibleComponent implements OnInit {
   });
 
   rendimientoProyectado = computed((): number | null => {
+    const tipo = this.tipoCombustible();
+    if (tipo === 'AdBlue' || tipo === 'Carga Eléctrica' || tipo === 'Hidrógeno') return null;
     const ultima = this.ultimaCarga();
     if (!ultima) return null;
     const v = this.formulario.value;
@@ -579,6 +692,8 @@ export class CombustibleComponent implements OnInit {
     if (kmRecorridos <= 0 || litros <= 0) return null;
     return (litros * 100) / kmRecorridos;
   });
+
+  unidadActual = computed(() => unidadTipo(this.tipoCombustible()));
 
   tieneErrores = computed(() =>
     this.alertasFormulario().some(a => a.tipo === 'error')
@@ -608,7 +723,7 @@ export class CombustibleComponent implements OnInit {
   cargarAlertasActivas() {
     this.svc.getAlertasCombustible(true).subscribe({
       next: a => this.alertasActivas.set(a),
-      error: () => { /* silencioso en error */ },
+      error: () => { /* silencioso */ },
     });
   }
 
@@ -617,6 +732,7 @@ export class CombustibleComponent implements OnInit {
   abrirFormulario() {
     const hoy = new Date().toISOString().slice(0, 10);
     this.formulario.reset({ fechaCarga: hoy });
+    this.tipoCombustible.set('Diesel');
     this.ultimaCarga.set(null);
     this.alertasFormulario.set([]);
     this.ultimaCargaId = null;
@@ -714,14 +830,15 @@ export class CombustibleComponent implements OnInit {
     const v = this.formulario.value;
 
     this.svc.registrarCarga({
-      vehiculoId:   v.vehiculoId!,
-      numDocumento: v.numDocumento || undefined,
-      kmVehiculo:   v.kmVehiculo!,
-      litros:       v.litros!,
-      precioLitro:  v.precioLitro!,
-      proveedor:    v.proveedor!,
-      estacion:     v.estacion || undefined,
-      fechaCarga:   v.fechaCarga || undefined,
+      vehiculoId:       v.vehiculoId!,
+      numDocumento:     v.numDocumento || undefined,
+      kmVehiculo:       v.kmVehiculo!,
+      litros:           v.litros!,
+      precioLitro:      v.precioLitro!,
+      proveedor:        v.proveedor!,
+      estacion:         v.estacion || undefined,
+      fechaCarga:       v.fechaCarga || undefined,
+      tipoCombustible:  this.tipoCombustible(),
     } as any).subscribe({
       next: (carga) => {
         this.guardando.set(false);
@@ -797,6 +914,14 @@ export class CombustibleComponent implements OnInit {
     });
   }
 
+  /** Descarta una anomalía del banner amarillo (persiste en localStorage) */
+  descartarAnomalia(carga: CargaCombustible) {
+    const nuevo = new Set<string>(this.dismissedIds());
+    nuevo.add(carga.id);
+    try { localStorage.setItem(this.DISMISSED_KEY, JSON.stringify([...nuevo])); } catch { /* cuota llena */ }
+    this.dismissedIds.set(nuevo);
+  }
+
   // ── Helpers ─────────────────────────────────────────────────
 
   patenteVehiculo(vehiculoId: string): string {
@@ -813,5 +938,21 @@ export class CombustibleComponent implements OnInit {
     if (tipo === 'error')   return 'error';
     if (tipo === 'warning') return 'warning_amber';
     return 'info';
+  }
+
+  seleccionarTipo(tipo: TipoCombustible) {
+    this.tipoCombustible.set(tipo);
+    this.recalcularAlertas();
+  }
+
+  slugTipo(tipo: string | null | undefined): string {
+    if (!tipo) return 'diesel';
+    return tipo.toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[éèê]/g, 'e')
+      .replace(/[íì]/g, 'i')
+      .replace(/[óò]/g, 'o')
+      .replace(/[áà]/g, 'a')
+      .replace(/[ú]/g, 'u');
   }
 }

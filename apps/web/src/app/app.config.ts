@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, LOCALE_ID } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
@@ -41,5 +41,7 @@ export const appConfig: ApplicationConfig = {
     MsalService,
     MsalGuard,
     MsalBroadcastService,
+    // Locale chileno: punto miles, coma decimal, $ símbolo CLP
+    { provide: LOCALE_ID, useValue: 'es-CL' },
   ],
 };

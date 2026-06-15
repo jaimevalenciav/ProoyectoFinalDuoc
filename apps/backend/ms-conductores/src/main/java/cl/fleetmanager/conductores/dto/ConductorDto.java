@@ -15,4 +15,8 @@ public class ConductorDto {
     @NotBlank String  categoriaLicencia;
     @NotNull  LocalDate vencimientoLicencia;
     String            estado;
+    String            fotoBase64;
+    String            licenciaFrente;
+    String            licenciaReverso;
+    LocalDate         vencimientoCedula;
 }

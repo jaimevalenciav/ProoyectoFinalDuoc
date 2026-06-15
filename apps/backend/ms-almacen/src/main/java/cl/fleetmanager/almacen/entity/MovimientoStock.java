@@ -25,9 +25,27 @@ public class MovimientoStock {
     private String empresaId;
 
     @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "REPUESTO_ID", nullable = false)
     private Repuesto repuesto;
+
+    @Transient
+    private String repuestoId;
+
+    @Transient
+    private String repuestoCodigo;
+
+    @Transient
+    private String repuestoDescripcion;
+
+    @PostLoad
+    void postLoad() {
+        if (repuesto != null) {
+            repuestoId          = repuesto.getId();
+            repuestoCodigo      = repuesto.getCodigo();
+            repuestoDescripcion = repuesto.getDescripcion();
+        }
+    }
 
     @Column(name = "TIPO", length = 20, nullable = false)
     private String tipo;
@@ -66,5 +84,11 @@ public class MovimientoStock {
     void prePersist() {
         if (id == null || id.isBlank()) id = UUID.randomUUID().toString();
         createdAt = LocalDateTime.now();
+        // Sync transient fields if repuesto is set at creation time
+        if (repuesto != null && repuestoId == null) {
+            repuestoId          = repuesto.getId();
+            repuestoCodigo      = repuesto.getCodigo();
+            repuestoDescripcion = repuesto.getDescripcion();
+        }
     }
 }

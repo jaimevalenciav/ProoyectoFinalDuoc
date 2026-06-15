@@ -61,6 +61,25 @@ public class Conductor {
     @Column(name = "ELIMINADO")
     private Integer eliminado;
 
+    /** OID de Azure AD B2C — usado para autenticación móvil (sin FK) */
+    @Column(name = "AZURE_OID", length = 36)
+    private String azureOid;
+
+    @Lob
+    @Column(name = "FOTO_BASE64", columnDefinition = "CLOB")
+    private String fotoBase64;
+
+    @Lob
+    @Column(name = "LICENCIA_FRENTE", columnDefinition = "CLOB")
+    private String licenciaFrente;
+
+    @Lob
+    @Column(name = "LICENCIA_REVERSO", columnDefinition = "CLOB")
+    private String licenciaReverso;
+
+    @Column(name = "VENCIMIENTO_CEDULA")
+    private LocalDate vencimientoCedula;
+
     @Column(name = "CREATED_AT")
     private LocalDateTime createdAt;
 

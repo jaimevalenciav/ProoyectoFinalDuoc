@@ -1,7 +1,9 @@
 package cl.fleetmanager.operaciones.service;
 
 import cl.fleetmanager.operaciones.dto.CargaCombustibleDto;
+import cl.fleetmanager.operaciones.entity.AlertaCombustible;
 import cl.fleetmanager.operaciones.entity.CargaCombustible;
+import cl.fleetmanager.operaciones.repository.AlertaCombustibleRepository;
 import cl.fleetmanager.operaciones.repository.CargaCombustibleRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,7 @@ import java.util.UUID;
 public class CargaCombustibleService {
 
     private final CargaCombustibleRepository repositorio;
+    private final AlertaCombustibleRepository alertaRepo;
 
     public Page<CargaCombustible> getAll(
         String empresaId, String vehiculoId,
@@ -46,7 +49,15 @@ public class CargaCombustibleService {
         BigDecimal litros      = dto.getLitros()      != null ? dto.getLitros()      : BigDecimal.ZERO;
         BigDecimal precioLitro = dto.getPrecioLitro() != null ? dto.getPrecioLitro() : BigDecimal.ZERO;
         BigDecimal costoTotal  = litros.multiply(precioLitro).setScale(2, RoundingMode.HALF_UP);
-        BigDecimal consumo     = calcularConsumo(dto.getVehiculoId(), dto.getKmVehiculo(), litros);
+
+        // AdBlue y Carga Eléctrica no tienen consumo L/100km
+        String tipo = dto.getTipoCombustible() != null ? dto.getTipoCombustible() : "Diesel";
+        boolean calculaConsumo = !tipo.equalsIgnoreCase("AdBlue")
+                              && !tipo.equalsIgnoreCase("Carga Eléctrica")
+                              && !tipo.equalsIgnoreCase("Hidrógeno");
+        BigDecimal consumo = calculaConsumo
+            ? calcularConsumo(dto.getVehiculoId(), dto.getKmVehiculo(), litros)
+            : null;
 
         CargaCombustible carga = CargaCombustible.builder()
             .id(UUID.randomUUID().toString())
@@ -62,9 +73,37 @@ public class CargaCombustibleService {
             .costoTotal(costoTotal)
             .kmVehiculo(dto.getKmVehiculo() != null ? dto.getKmVehiculo() : 0L)
             .consumo100km(consumo)
+            .tipoCombustible(tipo)
             .build();
 
-        return repositorio.save(carga);
+        CargaCombustible guardada = repositorio.save(carga);
+
+        // ── auto-generar alerta si consumo es anómalo ──────────────
+        if (consumo != null) {
+            String mensaje = null;
+            if (consumo.compareTo(new BigDecimal("35")) > 0) {
+                mensaje = String.format(
+                    "Consumo anómalo alto: %.1f L/100km para vehículo %s (carga del %s).",
+                    consumo.doubleValue(), dto.getVehiculoId(), guardada.getFechaCarga());
+            } else if (consumo.compareTo(new BigDecimal("5")) < 0) {
+                mensaje = String.format(
+                    "Consumo anómalo bajo: %.1f L/100km para vehículo %s (carga del %s).",
+                    consumo.doubleValue(), dto.getVehiculoId(), guardada.getFechaCarga());
+            }
+            if (mensaje != null) {
+                AlertaCombustible alerta = new AlertaCombustible();
+                alerta.setId(UUID.randomUUID().toString());
+                alerta.setEmpresaId(empresaId);
+                alerta.setCargaId(guardada.getId());
+                alerta.setVehiculoId(guardada.getVehiculoId());
+                alerta.setTipo("warning");
+                alerta.setIcono("local_gas_station");
+                alerta.setMensaje(mensaje);
+                alertaRepo.save(alerta);
+            }
+        }
+
+        return guardada;
     }
 
     public void eliminar(String id) {

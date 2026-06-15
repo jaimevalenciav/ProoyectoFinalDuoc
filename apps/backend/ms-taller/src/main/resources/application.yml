@@ -9,6 +9,14 @@ spring:
     username: ${ORACLE_USUARIO}
     password: ${ORACLE_CLAVE}
     driver-class-name: oracle.jdbc.OracleDriver
+    hikari:
+      maximum-pool-size: 2
+      minimum-idle: 1
+      connection-test-query: SELECT 1 FROM DUAL
+      keepalive-time: 30000
+      validation-timeout: 5000
+      connection-timeout: 30000
+      idle-timeout: 120000
   jpa:
     hibernate:
       ddl-auto: none

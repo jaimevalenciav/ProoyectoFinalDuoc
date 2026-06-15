@@ -9,6 +9,12 @@ import org.springframework.data.repository.query.Param;
 
 public interface ConductorRepository extends JpaRepository<Conductor, String> {
 
+    java.util.Optional<Conductor> findByEmailAndEliminado(String email, Integer eliminado);
+
+    java.util.Optional<Conductor> findByUsuarioIdAndEliminado(String usuarioId, Integer eliminado);
+
+    java.util.Optional<Conductor> findByAzureOidAndEliminado(String azureOid, Integer eliminado);
+
     @Query("SELECT c FROM Conductor c " +
            "WHERE c.empresaId = :empresaId " +
            "AND c.eliminado = 0 " +

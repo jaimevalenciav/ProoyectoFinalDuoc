@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { MatTabsModule } from '@angular/material/tabs';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,9 +16,11 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { TallerService } from '@core/services/taller.service';
 import { VehiculosService } from '@core/services/vehiculos.service';
 import { TareasDefinicionService } from '@core/services/tareas-definicion.service';
+import { MecanicosService } from '@core/services/mecanicos.service';
 import { DialogoService } from '@core/services/dialogo.service';
-import { OrdenTrabajo, Vehiculo, TareaDefinicion } from '@core/models';
+import { OrdenTrabajo, Vehiculo, TareaDefinicion, Mecanico } from '@core/models';
 import { TallerOtDialogComponent } from './taller-ot-dialog.component';
+import { validarRut, procesarInputRut } from '@core/utils/rut.utils';
 
 interface MaterialOt {
   repuestoId: string;
@@ -27,231 +30,375 @@ interface MaterialOt {
   cantidad: number;
 }
 
+const ESPECIALIDADES = [
+  { valor: 'MECANICO_GENERAL', etiqueta: 'Mecánico general' },
+  { valor: 'ELECTRICO',        etiqueta: 'Eléctrico' },
+  { valor: 'NEUMATICOS',       etiqueta: 'Neumáticos' },
+  { valor: 'CARROCERIA',       etiqueta: 'Carrocería' },
+  { valor: 'HIDRAULICA',       etiqueta: 'Hidráulica' },
+] as const;
+
 @Component({
   selector: 'app-taller',
   standalone: true,
   imports: [
     CommonModule, FormsModule, ReactiveFormsModule,
-    MatTableModule, MatButtonModule, MatIconModule,
+    MatTabsModule, MatTableModule, MatButtonModule, MatIconModule,
     MatInputModule, MatFormFieldModule, MatSelectModule, MatProgressSpinnerModule,
     MatProgressBarModule, MatSnackBarModule, MatTooltipModule, MatDialogModule,
   ],
   template: `
 <div class="pagina-taller">
 
-  <div class="encabezado-pagina">
-    <h1>Taller — Órdenes de trabajo</h1>
-    <button mat-flat-button class="btn-principal" (click)="abrirFormulario()">
-      <mat-icon>add</mat-icon> Nueva OT
-    </button>
-  </div>
+  <mat-tab-group animationDuration="200ms" class="tabs-taller">
 
-  <div class="barra-filtros">
-    <mat-form-field appearance="fill">
-      <mat-label>Estado</mat-label>
-      <mat-select [(ngModel)]="filtroEstado" (ngModelChange)="cargar()">
-        <mat-option value="">Todos</mat-option>
-        <mat-option value="PENDIENTE">Pendiente</mat-option>
-        <mat-option value="EN_EJECUCION">En ejecución</mat-option>
-        <mat-option value="CERRADA">Cerrada</mat-option>
-      </mat-select>
-    </mat-form-field>
-    <mat-form-field appearance="fill">
-      <mat-label>Tipo</mat-label>
-      <mat-select [(ngModel)]="filtroTipo" (ngModelChange)="cargar()">
-        <mat-option value="">Todos</mat-option>
-        <mat-option value="PREVENTIVA">Preventivo</mat-option>
-        <mat-option value="CORRECTIVA">Correctivo</mat-option>
-        <mat-option value="NEUMATICOS">Neumáticos</mat-option>
-        <mat-option value="ELECTRICA">Eléctrica</mat-option>
-      </mat-select>
-    </mat-form-field>
-  </div>
+    <!-- ════════ TAB 1: Órdenes de Trabajo ════════ -->
+    <mat-tab label="Órdenes de trabajo">
+      <div class="tab-contenido">
 
-  @if (cargando()) {
-    <div class="spinner-centrado"><mat-spinner diameter="40" /></div>
-  } @else {
-    <div class="superficie" style="padding:0;overflow:hidden">
-      <table mat-table [dataSource]="ordenes()">
+        <div class="barra-acciones">
+          <mat-form-field appearance="fill" style="width:160px">
+            <mat-label>Estado</mat-label>
+            <mat-select [(ngModel)]="filtroEstado" (ngModelChange)="cargar()">
+              <mat-option value="">Todos</mat-option>
+              <mat-option value="PENDIENTE">Pendiente</mat-option>
+              <mat-option value="EN_EJECUCION">En ejecución</mat-option>
+              <mat-option value="CERRADA">Cerrada</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="fill" style="width:160px">
+            <mat-label>Tipo</mat-label>
+            <mat-select [(ngModel)]="filtroTipo" (ngModelChange)="cargar()">
+              <mat-option value="">Todos</mat-option>
+              <mat-option value="PREVENTIVA">Preventivo</mat-option>
+              <mat-option value="CORRECTIVA">Correctivo</mat-option>
+              <mat-option value="NEUMATICOS">Neumáticos</mat-option>
+              <mat-option value="ELECTRICA">Eléctrica</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <span style="flex:1"></span>
+          <button mat-flat-button class="btn-principal" (click)="abrirFormulario()">
+            <mat-icon>add</mat-icon> Nueva OT
+          </button>
+        </div>
 
-        <ng-container matColumnDef="numero">
-          <th mat-header-cell *matHeaderCellDef>#</th>
-          <td mat-cell *matCellDef="let ot">
-            <span class="numero-ot">{{ ot.numero }}</span>
-          </td>
-        </ng-container>
+        @if (cargando()) {
+          <div class="spinner-centrado"><mat-spinner diameter="40" /></div>
+        } @else {
+          <div class="superficie" style="padding:0;overflow:hidden">
+            <table mat-table [dataSource]="ordenes()">
 
-        <ng-container matColumnDef="vehiculo">
-          <th mat-header-cell *matHeaderCellDef>Vehículo</th>
-          <td mat-cell *matCellDef="let ot">{{ ot.vehiculoPatente || ot.vehiculoId }}</td>
-        </ng-container>
+              <ng-container matColumnDef="numero">
+                <th mat-header-cell *matHeaderCellDef>#</th>
+                <td mat-cell *matCellDef="let ot">
+                  <span class="numero-ot">{{ ot.numero }}</span>
+                </td>
+              </ng-container>
 
-        <ng-container matColumnDef="tipo">
-          <th mat-header-cell *matHeaderCellDef>Tipo</th>
-          <td mat-cell *matCellDef="let ot">
-            <span class="badge {{ badgeTipo(ot.tipo) }}">{{ labelTipo(ot.tipo) }}</span>
-          </td>
-        </ng-container>
+              <ng-container matColumnDef="vehiculo">
+                <th mat-header-cell *matHeaderCellDef>Vehículo</th>
+                <td mat-cell *matCellDef="let ot">{{ ot.vehiculoPatente || ot.vehiculoId }}</td>
+              </ng-container>
 
-        <ng-container matColumnDef="descripcion">
-          <th mat-header-cell *matHeaderCellDef>Trabajo</th>
-          <td mat-cell *matCellDef="let ot" class="celda-descripcion">{{ ot.descripcion }}</td>
-        </ng-container>
+              <ng-container matColumnDef="tipo">
+                <th mat-header-cell *matHeaderCellDef>Tipo</th>
+                <td mat-cell *matCellDef="let ot">
+                  <span class="badge {{ badgeTipo(ot.tipo) }}">{{ labelTipo(ot.tipo) }}</span>
+                </td>
+              </ng-container>
 
-        <ng-container matColumnDef="avance">
-          <th mat-header-cell *matHeaderCellDef>Avance</th>
-          <td mat-cell *matCellDef="let ot">
-            <div class="celda-avance">
-              <mat-progress-bar mode="determinate" [value]="ot.avance" [class]="colorAvance(ot.avance)" />
-              <span class="pct-avance">{{ ot.avance }}%</span>
-            </div>
-          </td>
-        </ng-container>
+              <ng-container matColumnDef="descripcion">
+                <th mat-header-cell *matHeaderCellDef>Trabajo</th>
+                <td mat-cell *matCellDef="let ot" class="celda-descripcion">{{ ot.descripcion }}</td>
+              </ng-container>
 
-        <ng-container matColumnDef="estado">
-          <th mat-header-cell *matHeaderCellDef>Estado</th>
-          <td mat-cell *matCellDef="let ot">
-            <span class="badge {{ badgeEstado(ot.estado) }}">{{ labelEstado(ot.estado) }}</span>
-          </td>
-        </ng-container>
+              <ng-container matColumnDef="mecanico">
+                <th mat-header-cell *matHeaderCellDef>Mecánico</th>
+                <td mat-cell *matCellDef="let ot" style="font-size:13px;color:var(--ink-mid)">
+                  {{ ot.mecanicoResponsable || '—' }}
+                </td>
+              </ng-container>
 
-        <ng-container matColumnDef="acciones">
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let ot" class="acciones-fila">
-            <button mat-icon-button (click)="seleccionar(ot); $event.stopPropagation()" matTooltip="Ver detalle">
-              <mat-icon>checklist</mat-icon>
-            </button>
-            @if (ot.estado !== 'CERRADA') {
-              <button mat-icon-button (click)="abrirEdicion(ot); $event.stopPropagation()" matTooltip="Editar">
-                <mat-icon>edit</mat-icon>
-              </button>
+              <ng-container matColumnDef="avance">
+                <th mat-header-cell *matHeaderCellDef>Avance</th>
+                <td mat-cell *matCellDef="let ot">
+                  <div class="celda-avance">
+                    <mat-progress-bar mode="determinate" [value]="ot.avance" [class]="colorAvance(ot.avance)" />
+                    <span class="pct-avance">{{ ot.avance }}%</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="estado">
+                <th mat-header-cell *matHeaderCellDef>Estado</th>
+                <td mat-cell *matCellDef="let ot">
+                  <span class="badge {{ badgeEstado(ot.estado) }}">{{ labelEstado(ot.estado) }}</span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="acciones">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let ot" class="acciones-fila">
+                  <button mat-icon-button (click)="seleccionar(ot); $event.stopPropagation()" matTooltip="Ver detalle">
+                    <mat-icon>checklist</mat-icon>
+                  </button>
+                  @if (ot.estado !== 'CERRADA') {
+                    <button mat-icon-button (click)="abrirEdicion(ot); $event.stopPropagation()" matTooltip="Editar">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                  }
+                  <button mat-icon-button (click)="confirmarEliminar(ot); $event.stopPropagation()"
+                          matTooltip="Eliminar" [disabled]="eliminando() === ot.id" class="btn-danger-icon">
+                    @if (eliminando() === ot.id) {
+                      <mat-spinner diameter="16" />
+                    } @else {
+                      <mat-icon>delete_outline</mat-icon>
+                    }
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+              <tr mat-row *matRowDef="let row; columns: columnas;"
+                  (click)="seleccionar(row)" style="cursor:pointer"></tr>
+            </table>
+            @if (ordenes().length === 0) {
+              <div class="estado-vacio-tabla">
+                <mat-icon>build</mat-icon>
+                <p>No hay órdenes de trabajo con los filtros aplicados.</p>
+              </div>
             }
-            <button mat-icon-button (click)="confirmarEliminar(ot); $event.stopPropagation()"
-                    matTooltip="Eliminar" [disabled]="eliminando() === ot.id" class="btn-danger-icon">
-              @if (eliminando() === ot.id) {
-                <mat-spinner diameter="16" />
-              } @else {
-                <mat-icon>delete_outline</mat-icon>
-              }
-            </button>
-          </td>
-        </ng-container>
+          </div>
+        }
+      </div>
+    </mat-tab>
 
-        <tr mat-header-row *matHeaderRowDef="columnas"></tr>
-        <tr mat-row *matRowDef="let row; columns: columnas;"
-            (click)="seleccionar(row)" style="cursor:pointer"></tr>
-      </table>
-    </div>
-  }
+    <!-- ════════ TAB 2: Mecánicos ════════ -->
+    <mat-tab label="Mecánicos">
+      <div class="tab-contenido">
+        <div class="barra-acciones">
+          <mat-form-field appearance="fill" style="width:260px">
+            <mat-label>Buscar mecánico</mat-label>
+            <input matInput [(ngModel)]="busquedaMec" (ngModelChange)="cargarMecanicos()" />
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+          <button mat-stroked-button class="btn-secundario" (click)="toggleSoloActivosMec()">
+            <mat-icon>{{ soloActivosMec ? 'visibility_off' : 'visibility' }}</mat-icon>
+            {{ soloActivosMec ? 'Ver todos' : 'Solo activos' }}
+          </button>
+          <span style="flex:1"></span>
+          <button mat-flat-button class="btn-principal" (click)="abrirFormMecanico()">
+            <mat-icon>person_add</mat-icon> Nuevo mecánico
+          </button>
+        </div>
+
+        @if (cargandoMec()) {
+          <div class="spinner-centrado"><mat-spinner diameter="40" /></div>
+        } @else {
+          <div class="superficie" style="padding:0;overflow:hidden">
+            <table mat-table [dataSource]="mecanicos()">
+              <ng-container matColumnDef="nombre">
+                <th mat-header-cell *matHeaderCellDef>Nombre</th>
+                <td mat-cell *matCellDef="let m">
+                  <div style="font-weight:600">{{ m.nombre }}</div>
+                  @if (m.rut) { <div style="font-size:11px;color:var(--ink-soft)">{{ m.rut }}</div> }
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="especialidad">
+                <th mat-header-cell *matHeaderCellDef>Especialidad</th>
+                <td mat-cell *matCellDef="let m">
+                  <span class="chip-esp chip-esp-{{ slugEsp(m.especialidad) }}">
+                    {{ etiquetaEsp(m.especialidad) }}
+                  </span>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="contacto">
+                <th mat-header-cell *matHeaderCellDef>Contacto</th>
+                <td mat-cell *matCellDef="let m" style="font-size:13px">
+                  @if (m.telefono) { <div>{{ m.telefono }}</div> }
+                  @if (m.email)    { <div style="color:var(--ink-soft);font-size:12px">{{ m.email }}</div> }
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="estado">
+                <th mat-header-cell *matHeaderCellDef>Estado</th>
+                <td mat-cell *matCellDef="let m">
+                  <span [class]="m.activo ? 'insignia insignia-exito' : 'insignia insignia-error'">
+                    {{ m.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="acciones">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let m" class="acciones-fila">
+                  <button mat-icon-button (click)="abrirFormMecanico(m)" matTooltip="Editar">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  @if (m.activo) {
+                    <button mat-icon-button color="warn" (click)="eliminarMecanico(m)" matTooltip="Desactivar">
+                      <mat-icon>person_off</mat-icon>
+                    </button>
+                  }
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="columnasMec"></tr>
+              <tr mat-row *matRowDef="let row; columns: columnasMec;"></tr>
+            </table>
+            @if (mecanicos().length === 0) {
+              <div class="estado-vacio-tabla">
+                <mat-icon>engineering</mat-icon>
+                <p>No hay mecánicos registrados.</p>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
 </div>
 
-<!-- ── Formulario nueva OT ───────────────────────────────────────────────────── -->
+<!-- ════════ MODAL: Nueva / Editar OT ════════ -->
 @if (mostrarFormulario()) {
   <div class="capa-modal" (click)="cerrarFormulario()">
     <div class="panel-modal-ot" (click)="$event.stopPropagation()">
+
       <div class="panel-encabezado">
-        <h2>{{ otEditando() ? 'Editar OT ' + otEditando()!.numero : 'Nueva orden de trabajo' }}</h2>
+        <div>
+          <h2>{{ otEditando() ? 'Editar OT ' + otEditando()!.numero : 'Nueva orden de trabajo' }}</h2>
+          <p class="panel-subtitulo">Complete los datos para {{ otEditando() ? 'actualizar' : 'crear' }} la orden</p>
+        </div>
         <button mat-icon-button (click)="cerrarFormulario()"><mat-icon>close</mat-icon></button>
       </div>
 
-      <form [formGroup]="form" (ngSubmit)="guardar()" class="formulario-grid">
-        <mat-form-field appearance="outline">
-          <mat-label>Vehículo</mat-label>
-          <mat-select formControlName="vehiculoId">
-            @for (v of vehiculos(); track v.id) {
-              <mat-option [value]="v.id">{{ v.patente }} — {{ v.marca }} {{ v.modelo }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
+      <form [formGroup]="form" (ngSubmit)="guardar()" class="formulario-ot">
 
-        <mat-form-field appearance="outline">
-          <mat-label>Tipo de mantenimiento</mat-label>
-          <mat-select formControlName="tipo">
-            <mat-option value="PREVENTIVA">Preventivo</mat-option>
-            <mat-option value="CORRECTIVA">Correctivo</mat-option>
-            <mat-option value="NEUMATICOS">Neumáticos</mat-option>
-            <mat-option value="ELECTRICA">Eléctrica</mat-option>
-          </mat-select>
-        </mat-form-field>
+        <!-- Fila 1: Vehículo + Tipo -->
+        <div class="form-fila-2">
+          <mat-form-field appearance="fill">
+            <mat-label>Vehículo</mat-label>
+            <mat-select formControlName="vehiculoId">
+              @for (v of vehiculos(); track v.id) {
+                <mat-option [value]="v.id">{{ v.patente }} — {{ v.marca }} {{ v.modelo }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
 
-        <mat-form-field appearance="outline" style="grid-column:1/-1">
+          <mat-form-field appearance="fill">
+            <mat-label>Tipo de mantenimiento</mat-label>
+            <mat-select formControlName="tipo">
+              <mat-option value="PREVENTIVA">Preventivo</mat-option>
+              <mat-option value="CORRECTIVA">Correctivo</mat-option>
+              <mat-option value="NEUMATICOS">Neumáticos</mat-option>
+              <mat-option value="ELECTRICA">Eléctrica</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- Nombre del trabajo (ancho completo) -->
+        <mat-form-field appearance="fill" class="ancho-completo">
           <mat-label>Nombre del trabajo</mat-label>
           <input matInput formControlName="descripcion" placeholder="Ej: Cambio de aceite y filtros" />
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Mecánico responsable</mat-label>
-          <input matInput formControlName="mecanicoResponsable" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Fecha cierre estimada</mat-label>
-          <input matInput type="date" formControlName="fechaCierreEst" />
-        </mat-form-field>
-
-        <!-- Tareas iniciales (solo en nueva OT) -->
-        @if (!otEditando()) {
-        <div style="grid-column:1/-1">
-          <p style="font-weight:600;margin-bottom:8px;color:var(--azul-700)">Tareas del trabajo</p>
-
-          <!-- Selector catálogo -->
-          @if (tareasDefinicion().length > 0) {
-            <div class="fila-nueva-tarea" style="margin-bottom:8px">
-              <mat-form-field appearance="outline" style="flex:1">
-                <mat-label>Agregar del catálogo</mat-label>
-                <mat-select [(ngModel)]="tareaDefSeleccionada" [ngModelOptions]="{standalone:true}">
-                  @for (td of tareasDefinicion(); track td.id) {
-                    <mat-option [value]="td">{{ td.nombre }}{{ td.tipoOt ? ' (' + td.tipoOt + ')' : '' }}</mat-option>
+        <!-- Fila 3: Mecánico + Fecha cierre -->
+        <div class="form-fila-2">
+          <mat-form-field appearance="fill">
+            <mat-label>Mecánico responsable</mat-label>
+            <mat-select formControlName="mecanicoResponsable">
+              <mat-option value="">— Sin asignar —</mat-option>
+              @for (m of mecanicosActivos(); track m.id) {
+                <mat-option [value]="m.nombre">
+                  <span style="font-weight:600">{{ m.nombre }}</span>
+                  @if (m.especialidad) {
+                    <small style="color:var(--ink-soft);margin-left:6px">· {{ etiquetaEsp(m.especialidad) }}</small>
                   }
-                </mat-select>
-              </mat-form-field>
-              <button mat-stroked-button type="button" class="btn-secundario" (click)="agregarDelCatalogo()" [disabled]="!tareaDefSeleccionada">
-                <mat-icon>library_add</mat-icon>
-              </button>
-            </div>
-          }
-
-          @for (tarea of tareasFormulario; track $index) {
-            <div class="fila-tarea-form">
-              <mat-icon style="color:var(--azul-300)">drag_indicator</mat-icon>
-              <span style="flex:1;font-size:13px">{{ tarea }}</span>
-              <button mat-icon-button type="button" (click)="quitarTareaFormulario($index)">
-                <mat-icon>close</mat-icon>
-              </button>
-            </div>
-          }
-          <div class="fila-nueva-tarea">
-            <mat-form-field appearance="outline" style="flex:1">
-              <mat-label>Agregar tarea manualmente</mat-label>
-              <input matInput [(ngModel)]="nuevaTareaFormulario" [ngModelOptions]="{standalone:true}"
-                     (keyup.enter)="agregarTareaFormulario()" placeholder="Ej: Cambio de filtro de aceite" />
-            </mat-form-field>
-            <button mat-flat-button type="button" class="btn-principal" (click)="agregarTareaFormulario()">
-              <mat-icon>add</mat-icon>
-            </button>
-          </div>
-
-          <!-- Materiales requeridos (acumulados del catálogo) -->
-          @if (materialesRequeridos.length > 0) {
-            <div class="bloque-materiales-form">
-              <div class="materiales-header">
-                <mat-icon style="font-size:16px;color:var(--azul-500)">inventory_2</mat-icon>
-                <span>Materiales a solicitar al almacén</span>
-              </div>
-              @for (mat of materialesRequeridos; track mat.repuestoId) {
-                <div class="fila-material-form">
-                  <span class="mat-cod-form">{{ mat.repuestoCodigo || '—' }}</span>
-                  <span style="flex:1;font-size:13px">{{ mat.repuestoDescripcion || mat.repuestoId }}</span>
-                  <span class="mat-cant-form">{{ mat.cantidad }} {{ mat.repuestoUnidad || 'UN' }}</span>
-                </div>
+                </mat-option>
               }
-            </div>
-          }
+            </mat-select>
+            @if (mecanicosActivos().length === 0) {
+              <mat-hint>No hay mecánicos activos — créalos en la pestaña "Mecánicos"</mat-hint>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="fill">
+            <mat-label>Fecha cierre estimada</mat-label>
+            <input matInput type="date" formControlName="fechaCierreEst" />
+          </mat-form-field>
         </div>
 
-        } <!-- /!otEditando -->
+        <!-- Costo mano de obra (solo edición) -->
+        @if (otEditando()) {
+          <mat-form-field appearance="fill" class="ancho-completo">
+            <mat-label>Costo mano de obra (CLP)</mat-label>
+            <input matInput type="number" formControlName="costoManoObra" min="0" />
+            <span matPrefix>$&nbsp;</span>
+          </mat-form-field>
+        }
 
-        <div class="acciones-form" style="grid-column:1/-1">
+        <!-- Tareas iniciales (solo creación) -->
+        @if (!otEditando()) {
+          <div class="bloque-tareas-form">
+            <p class="tareas-titulo">
+              <mat-icon>checklist</mat-icon>
+              Tareas del trabajo
+            </p>
+
+            @if (tareasDefinicion().length > 0) {
+              <div class="fila-nueva-tarea">
+                <mat-form-field appearance="fill" style="flex:1">
+                  <mat-label>Agregar del catálogo</mat-label>
+                  <mat-select [(ngModel)]="tareaDefSeleccionada" [ngModelOptions]="{standalone:true}">
+                    @for (td of tareasDefinicion(); track td.id) {
+                      <mat-option [value]="td">{{ td.nombre }}{{ td.tipoOt ? ' (' + td.tipoOt + ')' : '' }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <button mat-stroked-button type="button" class="btn-secundario" (click)="agregarDelCatalogo()" [disabled]="!tareaDefSeleccionada">
+                  <mat-icon>library_add</mat-icon>
+                </button>
+              </div>
+            }
+
+            @for (tarea of tareasFormulario; track $index) {
+              <div class="fila-tarea-form">
+                <mat-icon style="color:var(--azul-300)">drag_indicator</mat-icon>
+                <span style="flex:1;font-size:13px">{{ tarea }}</span>
+                <button mat-icon-button type="button" (click)="quitarTareaFormulario($index)">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            }
+
+            <div class="fila-nueva-tarea">
+              <mat-form-field appearance="fill" style="flex:1">
+                <mat-label>Agregar tarea manualmente</mat-label>
+                <input matInput [(ngModel)]="nuevaTareaFormulario" [ngModelOptions]="{standalone:true}"
+                       (keyup.enter)="agregarTareaFormulario()" placeholder="Ej: Cambio de filtro de aceite" />
+              </mat-form-field>
+              <button mat-flat-button type="button" class="btn-principal" (click)="agregarTareaFormulario()">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+
+            @if (materialesRequeridos.length > 0) {
+              <div class="bloque-materiales-form">
+                <div class="materiales-header">
+                  <mat-icon style="font-size:16px;color:var(--azul-500)">inventory_2</mat-icon>
+                  <span>Materiales a solicitar al almacén</span>
+                </div>
+                @for (mat of materialesRequeridos; track mat.repuestoId) {
+                  <div class="fila-material-form">
+                    <span class="mat-cod-form">{{ mat.repuestoCodigo || '—' }}</span>
+                    <span style="flex:1;font-size:13px">{{ mat.repuestoDescripcion || mat.repuestoId }}</span>
+                    <span class="mat-cant-form">{{ mat.cantidad }} {{ mat.repuestoUnidad || 'UN' }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <div class="acciones-form">
           <button mat-button type="button" (click)="cerrarFormulario()">Cancelar</button>
           <button mat-flat-button class="btn-principal" type="submit" [disabled]="form.invalid || guardando()">
             @if (guardando()) { <mat-spinner diameter="18" /> }
@@ -262,9 +409,85 @@ interface MaterialOt {
     </div>
   </div>
 }
+
+<!-- ════════ MODAL: Nuevo / Editar Mecánico ════════ -->
+@if (mostrarFormMecanico()) {
+  <div class="capa-modal" (click)="cerrarFormMecanico()">
+    <div class="panel-modal-mec" (click)="$event.stopPropagation()">
+      <div class="panel-encabezado">
+        <div>
+          <h2>{{ mecEditando() ? 'Editar mecánico' : 'Nuevo mecánico' }}</h2>
+          <p class="panel-subtitulo">Datos del integrante del equipo de taller</p>
+        </div>
+        <button mat-icon-button (click)="cerrarFormMecanico()"><mat-icon>close</mat-icon></button>
+      </div>
+
+      <form [formGroup]="formMec" (ngSubmit)="guardarMecanico()" class="formulario-ot">
+        <div class="form-fila-2">
+          <mat-form-field appearance="fill">
+            <mat-label>Nombre completo</mat-label>
+            <input matInput formControlName="nombre" />
+          </mat-form-field>
+          <mat-form-field appearance="fill">
+            <mat-label>RUT</mat-label>
+            <input matInput formControlName="rut" placeholder="12.345.678-9"
+                   (input)="onRutMecInput($event)" />
+            @if (rutMecInvalido()) {
+              <mat-error>RUT inválido</mat-error>
+            }
+          </mat-form-field>
+        </div>
+        <div class="form-fila-2">
+          <mat-form-field appearance="fill">
+            <mat-label>Especialidad</mat-label>
+            <mat-select formControlName="especialidad">
+              <mat-option value="">Sin especificar</mat-option>
+              @for (e of especialidades; track e.valor) {
+                <mat-option [value]="e.valor">{{ e.etiqueta }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="fill">
+            <mat-label>Estado</mat-label>
+            <mat-select formControlName="activo">
+              <mat-option [value]="1">Activo</mat-option>
+              <mat-option [value]="0">Inactivo</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="form-fila-2">
+          <mat-form-field appearance="fill">
+            <mat-label>Teléfono</mat-label>
+            <input matInput formControlName="telefono" placeholder="+56 9 1234 5678" />
+          </mat-form-field>
+          <mat-form-field appearance="fill">
+            <mat-label>Email</mat-label>
+            <input matInput type="email" formControlName="email" />
+          </mat-form-field>
+        </div>
+        <mat-form-field appearance="fill" class="ancho-completo">
+          <mat-label>Observaciones</mat-label>
+          <textarea matInput formControlName="observacion" rows="2"
+                    placeholder="Certificaciones, restricciones u observaciones…"></textarea>
+        </mat-form-field>
+        <div class="acciones-form">
+          <button mat-button type="button" (click)="cerrarFormMecanico()">Cancelar</button>
+          <button mat-flat-button class="btn-principal" type="submit"
+                  [disabled]="formMec.invalid || guardandoMec()">
+            @if (guardandoMec()) { <mat-spinner diameter="18" /> }
+            @else { {{ mecEditando() ? 'Guardar cambios' : 'Crear mecánico' }} }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
   `,
   styles: [`
     .pagina-taller { display: flex; flex-direction: column; }
+    .tabs-taller { margin-top: -8px; }
+    .tab-contenido { padding: 20px 0; display: flex; flex-direction: column; gap: 16px; }
+    .barra-acciones { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
     .acciones-fila { white-space: nowrap; }
     .btn-danger-icon { color: #C10A5A !important; }
 
@@ -277,34 +500,82 @@ interface MaterialOt {
     ::ng-deep .avance-medio .mdc-linear-progress__bar-inner { border-color:#C25E01 !important; }
     ::ng-deep .avance-alto  .mdc-linear-progress__bar-inner { border-color:#007AF5 !important; }
 
+    .estado-vacio-tabla {
+      display:flex; flex-direction:column; align-items:center; padding:48px;
+      gap:8px; color:var(--ink-soft);
+      mat-icon { font-size:48px; width:48px; height:48px; opacity:.3; }
+    }
+
+    /* ── Chips especialidad ── */
+    .chip-esp {
+      display:inline-block; padding:2px 8px; border-radius:999px;
+      font-size:11px; font-weight:600;
+    }
+    .chip-esp-mecanico-general { background:#dbeafe; color:#1d4ed8; }
+    .chip-esp-electrico        { background:#fef9c3; color:#854d0e; }
+    .chip-esp-neumaticos       { background:#dcfce7; color:#166534; }
+    .chip-esp-carroceria       { background:#f3e8ff; color:#7e22ce; }
+    .chip-esp-hidraulica       { background:#fee2e2; color:#991b1b; }
+    .chip-esp-               { background:#f1f5f9; color:#64748b; }
+
     /* ── Modal centrado ── */
     .capa-modal {
-      position: fixed; inset: 0;
-      background: rgba(15,23,42,.45);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 1000;
-      padding: 16px;
+      position:fixed; inset:0;
+      background:rgba(15,23,42,.45);
+      display:flex; align-items:center; justify-content:center;
+      z-index:1000; padding:16px;
     }
-    .panel-modal-ot {
-      background: var(--color-superficie, #fff);
-      border-radius: var(--radio-lg, 12px);
-      width: min(600px, 96vw);
-      max-height: 90vh;
-      overflow-y: auto;
-      padding: 28px 28px 24px;
-      display: flex; flex-direction: column; gap: 20px;
-      box-shadow: 0 20px 60px rgba(0,0,0,.22);
+    .panel-modal-ot, .panel-modal-mec {
+      background:var(--color-superficie, #fff);
+      border-radius:var(--radio-lg, 12px);
+      width:min(640px, 96vw);
+      max-height:92vh;
+      overflow-y:auto;
+      padding:28px 28px 24px;
+      display:flex; flex-direction:column; gap:20px;
+      box-shadow:0 20px 60px rgba(0,0,0,.22);
     }
-    .panel-encabezado { display:flex; justify-content:space-between; align-items:flex-start; }
-    .formulario-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-    .acciones-form { display:flex; justify-content:flex-end; gap:8px; }
-    .fila-nueva-tarea { display:flex; align-items:center; gap:8px; margin-top:8px; }
-    .fila-tarea-form { display:flex; align-items:center; gap:8px; padding:6px 8px; background:var(--azul-50); border-radius:var(--radio-sm); margin-bottom:6px; }
+    .panel-modal-mec { width:min(540px, 96vw); }
+    .panel-encabezado {
+      display:flex; justify-content:space-between; align-items:flex-start;
+      h2 { margin:0; font-size:20px; color:var(--azul-900); }
+    }
+    .panel-subtitulo { margin:4px 0 0; font-size:12px; color:var(--ink-soft); }
 
-    .bloque-materiales-form { margin-top:12px; border:1px solid var(--azul-100); border-radius:var(--radio-md); overflow:hidden; }
-    .materiales-header { display:flex; align-items:center; gap:6px; padding:8px 12px; background:var(--azul-50); font-size:13px; font-weight:600; color:var(--azul-700); border-bottom:1px solid var(--azul-100); }
-    .fila-material-form { display:flex; align-items:center; gap:8px; padding:7px 12px; border-bottom:1px solid var(--azul-50); font-size:13px; }
-    .fila-material-form:last-child { border-bottom:none; }
+    /* ── Formulario ── */
+    .formulario-ot { display:flex; flex-direction:column; gap:14px; }
+    .form-fila-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .ancho-completo { width:100%; }
+    .acciones-form { display:flex; justify-content:flex-end; gap:8px; padding-top:4px; }
+
+    /* ── Bloque tareas en formulario ── */
+    .bloque-tareas-form {
+      background:var(--azul-50); border:1px solid var(--azul-100);
+      border-radius:var(--radius-md); padding:16px;
+      display:flex; flex-direction:column; gap:10px;
+    }
+    .tareas-titulo {
+      display:flex; align-items:center; gap:6px;
+      font-size:13px; font-weight:700; color:var(--azul-800); margin:0;
+      mat-icon { font-size:17px; width:17px; height:17px; color:var(--azul-500); }
+    }
+    .fila-nueva-tarea { display:flex; align-items:center; gap:8px; }
+    .fila-tarea-form {
+      display:flex; align-items:center; gap:8px; padding:6px 8px;
+      background:var(--azul-50); border-radius:var(--radius-sm); margin-bottom:2px;
+    }
+
+    .bloque-materiales-form { border:1px solid var(--azul-100); border-radius:var(--radius-md); overflow:hidden; }
+    .materiales-header {
+      display:flex; align-items:center; gap:6px; padding:8px 12px;
+      background:var(--azul-50); font-size:13px; font-weight:600; color:var(--azul-700);
+      border-bottom:1px solid var(--azul-100);
+    }
+    .fila-material-form {
+      display:flex; align-items:center; gap:8px; padding:7px 12px;
+      border-bottom:1px solid var(--azul-50); font-size:13px;
+      &:last-child { border-bottom:none; }
+    }
     .mat-cod-form { font-family:monospace; font-size:11px; color:var(--azul-500); min-width:60px; }
     .mat-cant-form { font-weight:600; color:var(--azul-700); min-width:50px; text-align:right; }
   `],
@@ -313,20 +584,35 @@ export class TallerComponent implements OnInit {
   private readonly svc       = inject(TallerService);
   private readonly vehSvc    = inject(VehiculosService);
   private readonly tareasSvc = inject(TareasDefinicionService);
+  private readonly mecSvc    = inject(MecanicosService);
   private readonly fb        = inject(FormBuilder);
   private readonly snack     = inject(MatSnackBar);
   private readonly dialog    = inject(MatDialog);
   private readonly dialogo   = inject(DialogoService);
 
+  // ── Datos ──────────────────────────────────────────────────────
   ordenes           = signal<OrdenTrabajo[]>([]);
   vehiculos         = signal<Vehiculo[]>([]);
   tareasDefinicion  = signal<TareaDefinicion[]>([]);
+  mecanicos         = signal<Mecanico[]>([]);
+  mecanicosActivos  = signal<Mecanico[]>([]);
+
+  // ── OT estado ──────────────────────────────────────────────────
   cargando          = signal(false);
   guardando         = signal(false);
   eliminando        = signal<string | null>(null);
   mostrarFormulario = signal(false);
   otEditando        = signal<OrdenTrabajo | null>(null);
 
+  // ── Mecánicos estado ───────────────────────────────────────────
+  cargandoMec       = signal(false);
+  guardandoMec      = signal(false);
+  mostrarFormMecanico = signal(false);
+  mecEditando       = signal<Mecanico | null>(null);
+  busquedaMec       = '';
+  soloActivosMec    = true;
+
+  // ── Formularios ────────────────────────────────────────────────
   filtroEstado = '';
   filtroTipo   = '';
   nuevaTareaFormulario  = '';
@@ -334,7 +620,10 @@ export class TallerComponent implements OnInit {
   tareaDefSeleccionada: TareaDefinicion | null = null;
   materialesRequeridos: MaterialOt[] = [];
 
-  columnas = ['numero', 'vehiculo', 'tipo', 'descripcion', 'avance', 'estado', 'acciones'];
+  readonly especialidades = ESPECIALIDADES;
+
+  columnas    = ['numero', 'vehiculo', 'tipo', 'descripcion', 'mecanico', 'avance', 'estado', 'acciones'];
+  columnasMec = ['nombre', 'especialidad', 'contacto', 'estado', 'acciones'];
 
   form = this.fb.group({
     vehiculoId:          ['', Validators.required],
@@ -342,14 +631,29 @@ export class TallerComponent implements OnInit {
     descripcion:         ['', Validators.required],
     mecanicoResponsable: [''],
     fechaCierreEst:      [''],
+    costoManoObra:       [0],
   });
 
+  formMec = this.fb.group({
+    nombre:       ['', Validators.required],
+    rut:          [''],
+    especialidad: [''],
+    telefono:     [''],
+    email:        [''],
+    activo:       [1],
+    observacion:  [''],
+  });
+
+  // ── Lifecycle ──────────────────────────────────────────────────
   ngOnInit() {
     this.cargar();
     this.vehSvc.getAll().subscribe(r => this.vehiculos.set(r.content ?? []));
     this.tareasSvc.getAllActivos().subscribe(list => this.tareasDefinicion.set(list));
+    this.cargarMecanicos();
+    this.cargarMecanicosActivos();
   }
 
+  // ── OT: carga y CRUD ───────────────────────────────────────────
   cargar() {
     this.cargando.set(true);
     this.svc.getAll({ estado: this.filtroEstado || undefined, tipo: this.filtroTipo || undefined })
@@ -362,15 +666,9 @@ export class TallerComponent implements OnInit {
   seleccionar(ot: OrdenTrabajo) {
     this.svc.getById(ot.id).subscribe(detalle => {
       const ref = this.dialog.open(TallerOtDialogComponent, {
-        width: '900px',
-        maxWidth: '96vw',
-        maxHeight: '90vh',
+        width: '900px', maxWidth: '96vw', maxHeight: '90vh',
         panelClass: 'dlg-ot',
-        data: {
-          ot: detalle,
-          vehiculos: this.vehiculos(),
-          tareasDefinicion: this.tareasDefinicion(),
-        },
+        data: { ot: detalle, vehiculos: this.vehiculos(), tareasDefinicion: this.tareasDefinicion() },
       });
       ref.afterClosed().subscribe(actualizada => {
         if (actualizada) {
@@ -380,7 +678,14 @@ export class TallerComponent implements OnInit {
     });
   }
 
-  abrirFormulario()  { this.otEditando.set(null); this.mostrarFormulario.set(true); }
+  abrirFormulario() {
+    this.otEditando.set(null);
+    this.form.reset({ costoManoObra: 0 });
+    this.tareasFormulario = [];
+    this.materialesRequeridos = [];
+    this.tareaDefSeleccionada = null;
+    this.mostrarFormulario.set(true);
+  }
 
   abrirEdicion(ot: OrdenTrabajo) {
     this.otEditando.set(ot);
@@ -390,6 +695,7 @@ export class TallerComponent implements OnInit {
       descripcion:         ot.descripcion,
       mecanicoResponsable: ot.mecanicoResponsable ?? '',
       fechaCierreEst:      ot.fechaCierreEst ?? '',
+      costoManoObra:       ot.costoManoObra ?? 0,
     });
     this.mostrarFormulario.set(true);
   }
@@ -438,15 +744,12 @@ export class TallerComponent implements OnInit {
     this.tareasFormulario.push(td.nombre);
     for (const art of td.articulos ?? []) {
       const existing = this.materialesRequeridos.find(m => m.repuestoId === art.repuestoId);
-      if (existing) {
-        existing.cantidad += art.cantidad;
-      } else {
+      if (existing) { existing.cantidad += art.cantidad; }
+      else {
         this.materialesRequeridos.push({
-          repuestoId:          art.repuestoId,
-          repuestoCodigo:      art.repuestoCodigo,
-          repuestoDescripcion: art.repuestoNombre,
-          repuestoUnidad:      art.repuestoUnidad,
-          cantidad:            art.cantidad,
+          repuestoId: art.repuestoId, repuestoCodigo: art.repuestoCodigo,
+          repuestoDescripcion: art.repuestoNombre, repuestoUnidad: art.repuestoUnidad,
+          cantidad: art.cantidad,
         });
       }
     }
@@ -460,13 +763,13 @@ export class TallerComponent implements OnInit {
     const ed = this.otEditando();
 
     if (ed) {
-      // ── Edición ──────────────────────────────────────────────────────────────
       this.svc.update(ed.id, {
         vehiculoId:          v.vehiculoId!,
         tipo:                v.tipo as any,
         descripcion:         v.descripcion!,
         mecanicoResponsable: v.mecanicoResponsable || undefined,
         fechaCierreEst:      v.fechaCierreEst || undefined,
+        costoManoObra:       v.costoManoObra ? Number(v.costoManoObra) : undefined,
       }).subscribe({
         next: actualizada => {
           this.guardando.set(false);
@@ -477,7 +780,6 @@ export class TallerComponent implements OnInit {
         error: () => this.guardando.set(false),
       });
     } else {
-      // ── Creación ─────────────────────────────────────────────────────────────
       this.svc.create({
         vehiculoId:          v.vehiculoId!,
         tipo:                v.tipo as any,
@@ -498,26 +800,120 @@ export class TallerComponent implements OnInit {
     }
   }
 
+  // ── Mecánicos CRUD ────────────────────────────────────────────
+  cargarMecanicos() {
+    this.cargandoMec.set(true);
+    this.mecSvc.getAll({
+      busqueda: this.busquedaMec || undefined,
+      activo:   this.soloActivosMec ? 1 : undefined,
+    }).subscribe({
+      next: r => { this.mecanicos.set(r.content); this.cargandoMec.set(false); },
+      error: () => this.cargandoMec.set(false),
+    });
+  }
+
+  cargarMecanicosActivos() {
+    this.mecSvc.getActivos().subscribe(list => this.mecanicosActivos.set(list));
+  }
+
+  toggleSoloActivosMec() { this.soloActivosMec = !this.soloActivosMec; this.cargarMecanicos(); }
+
+  abrirFormMecanico(m?: Mecanico) {
+    this.mecEditando.set(m ?? null);
+    if (m) {
+      this.formMec.patchValue({
+        nombre: m.nombre, rut: m.rut ?? '', especialidad: m.especialidad ?? '',
+        telefono: m.telefono ?? '', email: m.email ?? '',
+        activo: m.activo, observacion: m.observacion ?? '',
+      });
+    } else {
+      this.formMec.reset({ activo: 1, especialidad: '' });
+    }
+    this.mostrarFormMecanico.set(true);
+  }
+
+  cerrarFormMecanico() { this.mostrarFormMecanico.set(false); this.mecEditando.set(null); }
+
+  guardarMecanico() {
+    if (this.formMec.invalid) return;
+    this.guardandoMec.set(true);
+    const v  = this.formMec.value;
+    const ed = this.mecEditando();
+    const dto: Partial<Mecanico> = {
+      nombre: v.nombre!, rut: v.rut || undefined,
+      especialidad: v.especialidad || undefined,
+      telefono: v.telefono || undefined,
+      email: v.email || undefined,
+      activo: v.activo!,
+      observacion: v.observacion || undefined,
+    };
+    const op = ed ? this.mecSvc.update(ed.id, dto) : this.mecSvc.create(dto);
+    op.subscribe({
+      next: () => {
+        this.guardandoMec.set(false);
+        this.cerrarFormMecanico();
+        this.cargarMecanicos();
+        this.cargarMecanicosActivos();
+        this.snack.open(ed ? 'Mecánico actualizado' : 'Mecánico creado', '', { duration: 2500 });
+      },
+      error: () => this.guardandoMec.set(false),
+    });
+  }
+
+  async eliminarMecanico(m: Mecanico) {
+    const ok = await this.dialogo.confirmarEliminar(
+      `¿Desactivar a "${m.nombre}"?`,
+      'El mecánico quedará inactivo y no aparecerá en nuevas OT.'
+    );
+    if (!ok) return;
+    this.mecSvc.delete(m.id).subscribe({
+      next: () => {
+        this.cargarMecanicos();
+        this.cargarMecanicosActivos();
+        this.snack.open('Mecánico desactivado', '', { duration: 2500 });
+      },
+    });
+  }
+
+  // ── RUT mecánico ──────────────────────────────────────────────
+  rutMecInvalido(): boolean {
+    const v = this.formMec.get('rut')?.value ?? '';
+    if (!v?.trim()) return false;
+    return !validarRut(v);
+  }
+  onRutMecInput(event: Event): void {
+    const formatted = procesarInputRut(event);
+    this.formMec.patchValue({ rut: formatted }, { emitEvent: false });
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────
+  etiquetaEsp(valor?: string): string {
+    return ESPECIALIDADES.find(e => e.valor === valor)?.etiqueta ?? (valor || 'General');
+  }
+  slugEsp(valor?: string): string {
+    return (valor ?? '').toLowerCase().replace(/_/g, '-');
+  }
+
   badgeTipo(tipo: string): string {
-    const m: Record<string, string> = {
-      PREVENTIVA: 'badge-preventiva', CORRECTIVA: 'badge-correctiva',
-      NEUMATICOS: 'badge-neumaticos', ELECTRICA: 'badge-electrica',
+    const m: Record<string,string> = {
+      PREVENTIVA:'badge-preventiva', CORRECTIVA:'badge-correctiva',
+      NEUMATICOS:'badge-neumaticos', ELECTRICA:'badge-electrica',
     };
     return m[tipo] ?? '';
   }
   badgeEstado(estado: string): string {
-    const m: Record<string, string> = {
-      PENDIENTE: 'badge-pendiente', EN_EJECUCION: 'badge-ejecucion',
-      BLOQUEADA: 'badge-bloqueada', CERRADA: 'badge-cerrada',
+    const m: Record<string,string> = {
+      PENDIENTE:'badge-pendiente', EN_EJECUCION:'badge-ejecucion',
+      BLOQUEADA:'badge-bloqueada', CERRADA:'badge-cerrada',
     };
     return m[estado] ?? '';
   }
   labelTipo(tipo: string): string {
-    const m: Record<string, string> = { PREVENTIVA:'Preventivo', CORRECTIVA:'Correctivo', NEUMATICOS:'Neumáticos', ELECTRICA:'Eléctrica' };
+    const m: Record<string,string> = { PREVENTIVA:'Preventivo', CORRECTIVA:'Correctivo', NEUMATICOS:'Neumáticos', ELECTRICA:'Eléctrica' };
     return m[tipo] ?? tipo;
   }
   labelEstado(estado: string): string {
-    const m: Record<string, string> = { PENDIENTE:'Pendiente', EN_EJECUCION:'En ejecución', BLOQUEADA:'Bloqueada', CERRADA:'Cerrada' };
+    const m: Record<string,string> = { PENDIENTE:'Pendiente', EN_EJECUCION:'En ejecución', BLOQUEADA:'Bloqueada', CERRADA:'Cerrada' };
     return m[estado] ?? estado;
   }
   colorAvance(avance: number): string {

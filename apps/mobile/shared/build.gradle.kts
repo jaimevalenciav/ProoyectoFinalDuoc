@@ -27,6 +27,7 @@ kotlin {
             implementation(libs.kotlinx.serialization)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.koin.core)
+            implementation(libs.kotlinx.datetime)
         }
         androidMain.dependencies {
             implementation(libs.ktor.client.android)
@@ -39,7 +40,7 @@ kotlin {
 }
 
 android {
-    namespace = "cl.fleetmanager.shared"
+    namespace = "cl.truckmanager.shared"
     compileSdk = 35
     defaultConfig { minSdk = 26 }
     compileOptions {

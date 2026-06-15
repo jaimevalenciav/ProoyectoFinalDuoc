@@ -1,13 +1,16 @@
 package cl.fleetmanager.vehiculos.service;
 
 import cl.fleetmanager.vehiculos.dto.GpsPosicionActualDto;
+import cl.fleetmanager.vehiculos.dto.GpsTrackMobileRequest;
 import cl.fleetmanager.vehiculos.entity.GpsTrack;
 import cl.fleetmanager.vehiculos.entity.Vehiculo;
 import cl.fleetmanager.vehiculos.repository.GpsTrackRepository;
 import cl.fleetmanager.vehiculos.repository.VehiculoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -60,5 +63,34 @@ public class GpsService {
     /** Recorrido histórico de un vehículo */
     public List<GpsTrack> getRecorrido(String vehiculoId, LocalDateTime desde, LocalDateTime hasta) {
         return gpsRepo.findRecorrido(vehiculoId, desde, hasta);
+    }
+
+    /**
+     * Persiste un track GPS enviado por la app móvil.
+     * empresaId se obtiene del vehículo (FK_GPS_EMPRESA requiere que sea válido).
+     */
+    @Transactional
+    public GpsTrack guardarTrackMobile(GpsTrackMobileRequest req) {
+        Vehiculo vehiculo = vehRepo.findById(req.getVehiculoId())
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Vehículo no encontrado: " + req.getVehiculoId()));
+
+        GpsTrack track = new GpsTrack();
+        track.setEmpresaId(vehiculo.getEmpresaId());
+        track.setVehiculoId(req.getVehiculoId());
+        track.setConductorId(req.getConductorId());
+        track.setLatitud(req.getLatitud());
+        track.setLongitud(req.getLongitud());
+        track.setVelocidad(req.getVelocidad());
+        track.setPrecisionM(req.getPrecision());
+        // recordedAt: insertable=false → Oracle usa DEFAULT SYSTIMESTAMP
+        // saveAndFlush() fuerza el INSERT inmediato y recupera el ID generado por IDENTITY
+        GpsTrack saved = gpsRepo.saveAndFlush(track);
+
+        // Si Oracle no retornó el ID (conexión inestable), re-intentar con findById
+        if (saved.getId() == null) {
+            gpsRepo.flush();
+        }
+        return saved;
     }
 }

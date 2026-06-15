@@ -1,6 +1,7 @@
 package cl.fleetmanager.almacen.controller;
 
 import cl.fleetmanager.almacen.dto.AjusteStockDto;
+import cl.fleetmanager.almacen.dto.IngresoFacturaDto;
 import cl.fleetmanager.almacen.dto.RepuestoDto;
 import cl.fleetmanager.almacen.entity.Repuesto;
 import cl.fleetmanager.almacen.entity.UsuarioSistema;
@@ -79,5 +80,12 @@ public class RepuestoController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void eliminar(@PathVariable String id) {
         servicio.eliminar(id);
+    }
+
+    @PostMapping("/ingreso-factura")
+    public java.util.Map<String, Object> ingresoFactura(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody IngresoFacturaDto dto) {
+        return servicio.ingresoFactura(empresaId(jwt), dto);
     }
 }

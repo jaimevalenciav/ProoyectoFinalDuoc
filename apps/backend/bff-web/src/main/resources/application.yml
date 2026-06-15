@@ -1,5 +1,6 @@
 server:
   port: 8080
+  address: 0.0.0.0
 
 spring:
   application:
@@ -9,21 +10,22 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: https://${AZURE_B2C_TENANT}.b2clogin.com/${AZURE_B2C_TENANT}.onmicrosoft.com/v2.0/
-          jwk-set-uri: https://${AZURE_B2C_TENANT}.b2clogin.com/${AZURE_B2C_TENANT}.onmicrosoft.com/discovery/v2.0/keys?p=B2C_1_susi
+          # Solo jwk-set-uri — evita incompatibilidad del issuer claim de B2C
+          jwk-set-uri: https://trackmanager.b2clogin.com/trackmanager.onmicrosoft.com/discovery/v2.0/keys?p=B2C_1_susi
 
   cloud:
     gateway:
-      globalcors:
-        corsConfigurations:
-          '[/**]':
-            allowedOrigins:
-              - "http://localhost:4200"
-              - "${URL_FRONTEND:https://truckmanager.azurecontainerapps.io}"
-            allowedMethods: ["GET","POST","PUT","PATCH","DELETE","OPTIONS"]
-            allowedHeaders: ["*"]
-            allowCredentials: true
       routes:
+        # ⚠️ mobile-gps DEBE ir antes de mobile para que no lo capture la ruta genérica
+        # RewritePath: /api/v1/mobile/gps/track → /api/v1/gps/mobile/gps/track (mapping del controller)
+        - id: mobile-gps
+          uri: http://${MS_VEHICULOS_HOST:localhost}:8082
+          predicates: [Path=/api/v1/mobile/gps/**]
+          filters:
+            - RewritePath=/api/v1/mobile/gps/(?<seg>.*), /api/v1/gps/mobile/gps/${seg}
+        - id: mobile
+          uri: http://${MS_CONDUCTORES_HOST:localhost}:8083
+          predicates: [Path=/api/v1/mobile/**]
         - id: vehiculos
           uri: http://${MS_VEHICULOS_HOST:localhost}:8082
           predicates: [Path=/api/v1/vehiculos/**]
@@ -33,6 +35,15 @@ spring:
         - id: conductores
           uri: http://${MS_CONDUCTORES_HOST:localhost}:8083
           predicates: [Path=/api/v1/conductores/**]
+        - id: usuarios
+          uri: http://${MS_CONDUCTORES_HOST:localhost}:8083
+          predicates: [Path=/api/v1/usuarios/**]
+        - id: invitaciones
+          uri: http://${MS_CONDUCTORES_HOST:localhost}:8083
+          predicates: [Path=/api/v1/invitaciones/**]
+        - id: mecanicos
+          uri: http://${MS_CONDUCTORES_HOST:localhost}:8083
+          predicates: [Path=/api/v1/mecanicos/**]
         - id: taller
           uri: http://${MS_TALLER_HOST:localhost}:8084
           predicates: [Path=/api/v1/ordenes-trabajo/**]

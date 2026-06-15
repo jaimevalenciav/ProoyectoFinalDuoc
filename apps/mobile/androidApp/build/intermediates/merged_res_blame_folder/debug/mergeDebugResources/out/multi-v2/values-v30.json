@@ -1,0 +1,19 @@
+{
+    "logs": [
+        {
+            "outputFile": "cl.truckmanager.android.androidApp-mergeDebugResources-72:/values-v30/values-v30.xml",
+            "map": [
+                {
+                    "source": "/Users/jvalencia/.gradle/caches/8.9/transforms/77322053c78f21fd5c2e850f0b0b13d3/transformed/jetified-material3-release/res/values-v30/values-v30.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "72",
+                        "endOffsets": "123"
+                    }
+                }
+            ]
+        }
+    ]
+}

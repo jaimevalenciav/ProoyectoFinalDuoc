@@ -16,6 +16,7 @@ import { VehiculosService } from '@core/services/vehiculos.service';
 import { VehiculosMaestrosService } from '@core/services/vehiculos-maestros.service';
 import { TallerService } from '@core/services/taller.service';
 import { DialogoService } from '@core/services/dialogo.service';
+import { PerfilService } from '@core/services/perfil.service';
 import {
   Vehiculo, Sucursal, Municipalidad, Aseguradora, PlantaRevision,
   PermisoCirculacion, SeguroSoap, RevisionTecnica, OrdenTrabajo
@@ -35,9 +36,11 @@ import { VehiculoQrPrintComponent } from './vehiculo-qr-print.component';
   template: `
     <div class="encabezado-pagina">
       <h1>Vehículos</h1>
-      <button mat-flat-button class="btn-principal" (click)="abrirFormulario()">
-        <mat-icon>add</mat-icon> Nuevo vehículo
-      </button>
+      @if (puedeEscribir()) {
+        <button mat-flat-button class="btn-principal" (click)="abrirFormulario()">
+          <mat-icon>add</mat-icon> Nuevo vehículo
+        </button>
+      }
     </div>
 
     <!-- Filtros -->
@@ -116,16 +119,20 @@ import { VehiculoQrPrintComponent } from './vehiculo-qr-print.component';
               <button mat-icon-button (click)="imprimirQr(v)" matTooltip="Imprimir QR" style="color:#007AF5">
                 <mat-icon>qr_code_2</mat-icon>
               </button>
-              <button mat-icon-button (click)="abrirFormulario(v)" matTooltip="Editar">
-                <mat-icon>edit</mat-icon>
-              </button>
-              <button mat-icon-button color="warn" (click)="eliminar(v)" matTooltip="Eliminar">
-                <mat-icon>delete_outline</mat-icon>
-              </button>
+              @if (puedeEscribir()) {
+                <button mat-icon-button (click)="abrirFormulario(v)" matTooltip="Editar">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" (click)="eliminar(v)" matTooltip="Eliminar">
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              }
             </td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="columnas"></tr>
-          <tr mat-row *matRowDef="let fila; columns: columnas;" class="fila-clickable" (click)="abrirFormulario(fila)"></tr>
+          <tr mat-row *matRowDef="let fila; columns: columnas;"
+              [class.fila-clickable]="puedeEscribir()"
+              (click)="puedeEscribir() && abrirFormulario(fila)"></tr>
         </table>
         @if (vehiculos().length === 0) {
           <div class="estado-vacio-tabla">
@@ -222,8 +229,9 @@ import { VehiculoQrPrintComponent } from './vehiculo-qr-print.component';
                 </mat-form-field>
                 <mat-form-field appearance="fill">
                   <mat-label>Km actuales</mat-label>
-                  <input matInput type="number" formControlName="kmActuales" />
-                  <span matSuffix>km</span>
+                  <input matInput inputmode="numeric" formControlName="kmActuales"
+                         (focus)="enFoco($event)" (blur)="alSalir($event,'kmActuales')" />
+                  <span matSuffix class="sufijo-unidad">km</span>
                 </mat-form-field>
               </div>
 
@@ -259,7 +267,13 @@ import { VehiculoQrPrintComponent } from './vehiculo-qr-print.component';
                   <input matInput formControlName="numMotor" />
                 </mat-form-field>
               </div>
-              <!-- AdBlue toggle — visible para todos; relevante para Diésel + Euro V/VI -->
+              <div class="grid-4" style="margin-top:8px">
+                <mat-form-field appearance="fill">
+                  <mat-label>Nº Chasis</mat-label>
+                  <input matInput formControlName="numChasis" />
+                </mat-form-field>
+              </div>
+              <!-- AdBlue toggle — debajo de Nº Chasis -->
               <div class="adblue-toggle-row">
                 <mat-slide-toggle formControlName="usaAdBlue" color="primary">
                   Usa AdBlue (sistema SCR / reductor de emisiones NOx)
@@ -268,30 +282,27 @@ import { VehiculoQrPrintComponent } from './vehiculo-qr-print.component';
                   <span class="adblue-badge"><mat-icon>opacity</mat-icon> AdBlue habilitado — se podrán registrar recargas en el módulo Operaciones</span>
                 }
               </div>
-              <div class="grid-4" style="margin-top:8px">
-                <mat-form-field appearance="fill">
-                  <mat-label>Nº Chasis</mat-label>
-                  <input matInput formControlName="numChasis" />
-                </mat-form-field>
-              </div>
 
               <!-- ── SECCIÓN: Especificaciones ── -->
               <div class="seccion-titulo"><mat-icon>monitor_weight</mat-icon> Especificaciones Técnicas</div>
               <div class="grid-3">
                 <mat-form-field appearance="fill">
                   <mat-label>Capacidad estanque (L)</mat-label>
-                  <input matInput type="number" formControlName="capacidadEstanque" />
-                  <span matSuffix>L</span>
+                  <input matInput inputmode="numeric" formControlName="capacidadEstanque"
+                         (focus)="enFoco($event)" (blur)="alSalir($event,'capacidadEstanque')" />
+                  <span matSuffix class="sufijo-unidad">L</span>
                 </mat-form-field>
                 <mat-form-field appearance="fill">
                   <mat-label>Tara (kg)</mat-label>
-                  <input matInput type="number" formControlName="taraKg" />
-                  <span matSuffix>kg</span>
+                  <input matInput inputmode="numeric" formControlName="taraKg"
+                         (focus)="enFoco($event)" (blur)="alSalir($event,'taraKg')" />
+                  <span matSuffix class="sufijo-unidad">kg</span>
                 </mat-form-field>
                 <mat-form-field appearance="fill">
                   <mat-label>Cap. carga (kg)</mat-label>
-                  <input matInput type="number" formControlName="capacidadCargaKg" />
-                  <span matSuffix>kg</span>
+                  <input matInput inputmode="numeric" formControlName="capacidadCargaKg"
+                         (focus)="enFoco($event)" (blur)="alSalir($event,'capacidadCargaKg')" />
+                  <span matSuffix class="sufijo-unidad">kg</span>
                 </mat-form-field>
               </div>
 
@@ -300,8 +311,9 @@ import { VehiculoQrPrintComponent } from './vehiculo-qr-print.component';
               <div class="grid-3">
                 <mat-form-field appearance="fill">
                   <mat-label>Valor de compra</mat-label>
-                  <input matInput type="number" formControlName="valorCompra" />
-                  <span matPrefix>$&nbsp;</span>
+                  <input matInput inputmode="numeric" formControlName="valorCompra"
+                         (focus)="enFoco($event)" (blur)="alSalir($event,'valorCompra')" />
+                  <span matPrefix class="prefijo-unidad">$&nbsp;</span>
                 </mat-form-field>
                 <mat-form-field appearance="fill">
                   <mat-label>Fecha de compra</mat-label>
@@ -742,6 +754,20 @@ import { VehiculoQrPrintComponent } from './vehiculo-qr-print.component';
     }
     .etq-dato { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--azul-400); }
 
+    /* Sufijos y prefijos de unidad con padding */
+    .sufijo-unidad {
+      padding-right: 10px;
+      color: var(--ink-soft);
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .prefijo-unidad {
+      padding-left: 10px;
+      color: var(--ink-soft);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
     /* AdBlue toggle */
     .adblue-toggle-row {
       display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
@@ -791,6 +817,9 @@ export class VehiculosComponent implements OnInit {
   private readonly notificacion  = inject(MatSnackBar);
   private readonly dialog        = inject(MatDialog);
   private readonly dialogo       = inject(DialogoService);
+  readonly perfil                = inject(PerfilService);
+
+  readonly puedeEscribir = computed(() => this.perfil.puedeEscribir('vehiculos'));
 
   columnas = ['patente', 'marcaModelo', 'tipo', 'estado', 'kilometraje', 'vencimientos', 'acciones'];
   colsPermiso  = ['vigente', 'municipalidad', 'fechaPago', 'valor', 'vencimiento', 'doc', 'acc'];
@@ -940,6 +969,7 @@ export class VehiculosComponent implements OnInit {
       this.permisosCirculacion.set([]); this.segurosSOAP.set([]); this.revisionesTecnicas.set([]); this.historialTaller.set([]);
     }
     this.mostrarFormulario.set(true);
+    this.formatearCamposNumericos();
   }
 
   cerrarFormulario() { this.mostrarFormulario.set(false); }
@@ -948,7 +978,21 @@ export class VehiculosComponent implements OnInit {
     if (this.formulario.invalid) return;
     this.guardando.set(true);
     const v = this.formulario.value as any;
-    const solicitud = { ...v, usaAdBlue: v.usaAdBlue ? 1 : 0 };
+    // Normalizar campos numéricos que pueden venir como string formateado
+    const parseMiles = (val: any) => {
+      if (val == null || val === '') return null;
+      if (typeof val === 'string') return parseFloat(val.replace(/\./g, '').replace(/,/g, '')) || null;
+      return val;
+    };
+    const solicitud = {
+      ...v,
+      usaAdBlue:          v.usaAdBlue ? 1 : 0,
+      kmActuales:         parseMiles(v.kmActuales)         ?? 0,
+      capacidadEstanque:  parseMiles(v.capacidadEstanque),
+      taraKg:             parseMiles(v.taraKg),
+      capacidadCargaKg:   parseMiles(v.capacidadCargaKg),
+      valorCompra:        parseMiles(v.valorCompra),
+    };
     const operacion = this.idEdicion()
       ? this.servicio.update(this.idEdicion()!, solicitud)
       : this.servicio.create(solicitud);
@@ -1109,5 +1153,46 @@ export class VehiculosComponent implements OnInit {
   }
   nombrePlanta(id: string | undefined): string {
     return this.plantasRevision().find(p => p.id === id)?.nombre ?? '—';
+  }
+
+  // ── Formato de miles en inputs numéricos ─────────────────────
+
+  /** Al enfocar el campo: muestra el número plano sin separadores */
+  enFoco(event: FocusEvent) {
+    const input = event.target as HTMLInputElement;
+    const raw = input.value.replace(/\./g, '').replace(/,/g, '');
+    input.value = raw || '';
+    input.select();
+  }
+
+  /** Al salir del campo: formatea con separador de miles (es-CL) y guarda número en el form */
+  alSalir(event: FocusEvent, campo: string) {
+    const input = event.target as HTMLInputElement;
+    const limpio = input.value.replace(/\./g, '').replace(/,/g, '').trim();
+    const num = limpio !== '' ? parseFloat(limpio) : null;
+    this.formulario.get(campo)?.setValue(num, { emitEvent: false });
+    input.value = num != null && !isNaN(num)
+      ? num.toLocaleString('es-CL')
+      : '';
+  }
+
+  /** Inicializa el display formateado en el input al abrir el formulario */
+  formatearCamposNumericos() {
+    const campos = ['kmActuales','capacidadEstanque','taraKg','capacidadCargaKg','valorCompra'];
+    campos.forEach(c => {
+      const ctrl = this.formulario.get(c);
+      if (ctrl?.value != null && ctrl.value !== '') {
+        const num = Number(ctrl.value);
+        if (!isNaN(num) && num > 0) {
+          // Los inputs están en el DOM; actualizar vía timeout
+          setTimeout(() => {
+            const inputs = document.querySelectorAll(`[formcontrolname="${c}"]`);
+            inputs.forEach(el => {
+              (el as HTMLInputElement).value = num.toLocaleString('es-CL');
+            });
+          }, 50);
+        }
+      }
+    });
   }
 }
