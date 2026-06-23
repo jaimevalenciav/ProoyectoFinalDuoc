@@ -48,10 +48,14 @@ data class VehiculoResumen(
 @Serializable
 data class ServicioMobile(
     val id: String,
+    val numServicio: String? = null,
     val origen: String = "",
     val destino: String = "",
     val estado: String = "",
     val vehiculoId: String? = null,
     val conductorId: String? = null,
     val fechaServicio: String? = null,
+    val tipoServicio: String? = null,
+    val clienteNombre: String? = null,
+    val clienteRut: String? = null,
 )

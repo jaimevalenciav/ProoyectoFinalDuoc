@@ -1,0 +1,33 @@
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Compresión
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript
+               text/xml application/xml application/javascript text/javascript;
+
+    # Proxy /api → BFF-Web (Container App interno en ACA o localhost en dev)
+    location /api {
+        proxy_pass         http://${BFF_HOST};
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $proxy_host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_read_timeout 120s;
+    }
+
+    # Angular SPA — siempre servir index.html para rutas del router
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Assets estáticos con caché agresiva
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff2?)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}

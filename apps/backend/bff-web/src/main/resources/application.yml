@@ -10,91 +10,97 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          # Solo jwk-set-uri — evita incompatibilidad del issuer claim de B2C
           jwk-set-uri: https://trackmanager.b2clogin.com/trackmanager.onmicrosoft.com/discovery/v2.0/keys?p=B2C_1_susi
 
   cloud:
     gateway:
       routes:
-        # ⚠️ mobile-gps DEBE ir antes de mobile para que no lo capture la ruta genérica
-        # RewritePath: /api/v1/mobile/gps/track → /api/v1/gps/mobile/gps/track (mapping del controller)
+        # ── Puertos: en local usan el puerto nativo; en ACA usan 80 (ingress interno)
+        # MS_VEHICULOS_PORT   = 8082 (local) | 80 (ACA)
+        # MS_CONDUCTORES_PORT = 8083 (local) | 80 (ACA)
+        # MS_TALLER_PORT      = 8084 (local) | 80 (ACA)
+        # MS_ALMACEN_PORT     = 8085 (local) | 80 (ACA)
+        # MS_OPERACIONES_PORT = 8086 (local) | 80 (ACA)
+        # MS_REPORTES_PORT    = 8087 (local) | 80 (ACA)
+
+        # ⚠️ mobile-gps ANTES que mobile
         - id: mobile-gps
-          uri: http://${MS_VEHICULOS_HOST:localhost}:8082
+          uri: http://${MS_VEHICULOS_HOST:localhost}:${MS_VEHICULOS_PORT:8082}
           predicates: [Path=/api/v1/mobile/gps/**]
           filters:
             - RewritePath=/api/v1/mobile/gps/(?<seg>.*), /api/v1/gps/mobile/gps/${seg}
         - id: mobile
-          uri: http://${MS_CONDUCTORES_HOST:localhost}:8083
+          uri: http://${MS_CONDUCTORES_HOST:localhost}:${MS_CONDUCTORES_PORT:8083}
           predicates: [Path=/api/v1/mobile/**]
         - id: vehiculos
-          uri: http://${MS_VEHICULOS_HOST:localhost}:8082
+          uri: http://${MS_VEHICULOS_HOST:localhost}:${MS_VEHICULOS_PORT:8082}
           predicates: [Path=/api/v1/vehiculos/**]
         - id: gps
-          uri: http://${MS_VEHICULOS_HOST:localhost}:8082
+          uri: http://${MS_VEHICULOS_HOST:localhost}:${MS_VEHICULOS_PORT:8082}
           predicates: [Path=/api/v1/gps/**]
         - id: conductores
-          uri: http://${MS_CONDUCTORES_HOST:localhost}:8083
+          uri: http://${MS_CONDUCTORES_HOST:localhost}:${MS_CONDUCTORES_PORT:8083}
           predicates: [Path=/api/v1/conductores/**]
         - id: usuarios
-          uri: http://${MS_CONDUCTORES_HOST:localhost}:8083
+          uri: http://${MS_CONDUCTORES_HOST:localhost}:${MS_CONDUCTORES_PORT:8083}
           predicates: [Path=/api/v1/usuarios/**]
         - id: invitaciones
-          uri: http://${MS_CONDUCTORES_HOST:localhost}:8083
+          uri: http://${MS_CONDUCTORES_HOST:localhost}:${MS_CONDUCTORES_PORT:8083}
           predicates: [Path=/api/v1/invitaciones/**]
         - id: mecanicos
-          uri: http://${MS_CONDUCTORES_HOST:localhost}:8083
+          uri: http://${MS_CONDUCTORES_HOST:localhost}:${MS_CONDUCTORES_PORT:8083}
           predicates: [Path=/api/v1/mecanicos/**]
         - id: taller
-          uri: http://${MS_TALLER_HOST:localhost}:8084
+          uri: http://${MS_TALLER_HOST:localhost}:${MS_TALLER_PORT:8084}
           predicates: [Path=/api/v1/ordenes-trabajo/**]
         - id: tareas-definicion
-          uri: http://${MS_TALLER_HOST:localhost}:8084
+          uri: http://${MS_TALLER_HOST:localhost}:${MS_TALLER_PORT:8084}
           predicates: [Path=/api/v1/tareas-definicion/**]
         - id: almacen-repuestos
-          uri: http://${MS_ALMACEN_HOST:localhost}:8085
+          uri: http://${MS_ALMACEN_HOST:localhost}:${MS_ALMACEN_PORT:8085}
           predicates: [Path=/api/v1/repuestos/**]
         - id: almacen-movimientos
-          uri: http://${MS_ALMACEN_HOST:localhost}:8085
+          uri: http://${MS_ALMACEN_HOST:localhost}:${MS_ALMACEN_PORT:8085}
           predicates: [Path=/api/v1/movimientos-stock/**]
         - id: operaciones-combustible
-          uri: http://${MS_OPERACIONES_HOST:localhost}:8086
+          uri: http://${MS_OPERACIONES_HOST:localhost}:${MS_OPERACIONES_PORT:8086}
           predicates: [Path=/api/v1/combustible/**]
         - id: operaciones-adblue
-          uri: http://${MS_OPERACIONES_HOST:localhost}:8086
+          uri: http://${MS_OPERACIONES_HOST:localhost}:${MS_OPERACIONES_PORT:8086}
           predicates: [Path=/api/v1/adblue/**]
         - id: operaciones-servicios
-          uri: http://${MS_OPERACIONES_HOST:localhost}:8086
+          uri: http://${MS_OPERACIONES_HOST:localhost}:${MS_OPERACIONES_PORT:8086}
           predicates: [Path=/api/v1/servicios/**]
         - id: operaciones-clientes
-          uri: http://${MS_OPERACIONES_HOST:localhost}:8086
+          uri: http://${MS_OPERACIONES_HOST:localhost}:${MS_OPERACIONES_PORT:8086}
           predicates: [Path=/api/v1/clientes/**]
         - id: operaciones-facturas
-          uri: http://${MS_OPERACIONES_HOST:localhost}:8086
+          uri: http://${MS_OPERACIONES_HOST:localhost}:${MS_OPERACIONES_PORT:8086}
           predicates: [Path=/api/v1/facturas/**]
         - id: reportes
-          uri: http://${MS_REPORTES_HOST:localhost}:8087
+          uri: http://${MS_REPORTES_HOST:localhost}:${MS_REPORTES_PORT:8087}
           predicates: [Path=/api/v1/reportes/**]
         - id: sucursales
-          uri: http://${MS_VEHICULOS_HOST:localhost}:8082
+          uri: http://${MS_VEHICULOS_HOST:localhost}:${MS_VEHICULOS_PORT:8082}
           predicates: [Path=/api/v1/sucursales/**]
         - id: municipalidades
-          uri: http://${MS_VEHICULOS_HOST:localhost}:8082
+          uri: http://${MS_VEHICULOS_HOST:localhost}:${MS_VEHICULOS_PORT:8082}
           predicates: [Path=/api/v1/municipalidades/**]
         - id: aseguradoras
-          uri: http://${MS_VEHICULOS_HOST:localhost}:8082
+          uri: http://${MS_VEHICULOS_HOST:localhost}:${MS_VEHICULOS_PORT:8082}
           predicates: [Path=/api/v1/aseguradoras/**]
         - id: plantas-revision
-          uri: http://${MS_VEHICULOS_HOST:localhost}:8082
+          uri: http://${MS_VEHICULOS_HOST:localhost}:${MS_VEHICULOS_PORT:8082}
           predicates: [Path=/api/v1/plantas-revision/**]
         - id: permisos-circulacion
-          uri: http://${MS_VEHICULOS_HOST:localhost}:8082
+          uri: http://${MS_VEHICULOS_HOST:localhost}:${MS_VEHICULOS_PORT:8082}
           predicates: [Path=/api/v1/permisos-circulacion/**]
         - id: seguros-soap
-          uri: http://${MS_VEHICULOS_HOST:localhost}:8082
+          uri: http://${MS_VEHICULOS_HOST:localhost}:${MS_VEHICULOS_PORT:8082}
           predicates: [Path=/api/v1/seguros-soap/**]
         - id: revisiones-tecnicas
-          uri: http://${MS_VEHICULOS_HOST:localhost}:8082
+          uri: http://${MS_VEHICULOS_HOST:localhost}:${MS_VEHICULOS_PORT:8082}
           predicates: [Path=/api/v1/revisiones-tecnicas/**]
         - id: tipos-servicio
-          uri: http://${MS_OPERACIONES_HOST:localhost}:8086
+          uri: http://${MS_OPERACIONES_HOST:localhost}:${MS_OPERACIONES_PORT:8086}
           predicates: [Path=/api/v1/tipos-servicio/**]

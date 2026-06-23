@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { environment } from '@env/environment';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
@@ -649,7 +650,7 @@ export class FacturacionComponent implements OnInit {
 
   // ── PDF ───────────────────────────────────────────────────
   verPdf(facturaId: string): void {
-    window.open(`http://localhost:8080/api/v1/facturas/${facturaId}/pdf`, '_blank');
+    window.open(`${environment.apiUrl}/facturas/${facturaId}/pdf`, '_blank');
   }
 
   // ── Anular factura ────────────────────────────────────────

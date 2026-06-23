@@ -59,7 +59,7 @@ public class UsuarioService {
                     .azureOid(azureOid)
                     .nombre(nombre)
                     .email(email)
-                    .rol(primerUsuario(empresaId) ? "ADMIN" : "MECANICO_TALLER")
+                    .rol(primerUsuario(empresaId) ? "ADMIN" : "OPERADOR")
                     .build();
             return toDto(repo.save(nuevo));
         }

@@ -27,9 +27,13 @@ export function msalInstanceFactory(): IPublicClientApplication {
 }
 
 export function msalInterceptorConfigFactory(): MsalInterceptorConfiguration {
+  const protectedResourceMap = new Map<string, Array<string>>([
+    [environment.apiUrl, environment.apiScopes],
+  ]);
+
   return {
     interactionType: InteractionType.Redirect,
-    protectedResourceMap: new Map(),
+    protectedResourceMap,
   };
 }
 

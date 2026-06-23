@@ -35,7 +35,7 @@ class ServicioRastreoGps : Service() {
         const val ID_NOTIF              = 1001
         const val EXTRA_CONDUCTOR       = "idConductor"
         const val EXTRA_VEHICULO        = "idVehiculo"
-        const val INTERVALO_MS          = 30_000L   // 30 s (debug) → cambiar a 120_000L en producción
+        const val INTERVALO_MS          = 60_000L   // 60 s
         private val FMT_HORA = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
     }
 

@@ -28,12 +28,13 @@ fun createHttpClient(
         bearer {
             loadTokens { BearerTokens(tokenProvider() ?: "", "") }
             refreshTokens { BearerTokens(tokenProvider() ?: "", "") }
+            sendWithoutRequest { true }   // enviar Bearer en TODAS las requests sin esperar challenge
         }
     }
 
     install(HttpTimeout) {
-        requestTimeoutMillis  = 15_000
-        connectTimeoutMillis  = 10_000
-        socketTimeoutMillis   = 15_000
+        requestTimeoutMillis  = 60_000   // cold start ACA scale-to-zero puede tardar ~30-45s
+        connectTimeoutMillis  = 30_000
+        socketTimeoutMillis   = 60_000
     }
 }

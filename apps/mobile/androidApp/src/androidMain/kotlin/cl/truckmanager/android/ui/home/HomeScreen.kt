@@ -158,8 +158,14 @@ fun PantallaInicio(
                         Row(Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically) {
-                            Text("Servicio asignado", fontSize = 12.sp, fontFamily = FuenteInter,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = .55f))
+                            Column {
+                                Text("Servicio asignado", fontSize = 12.sp, fontFamily = FuenteInter,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = .55f))
+                                if (!servicio.numServicio.isNullOrBlank())
+                                    Text("N° ${servicio.numServicio}", fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold, fontFamily = FuenteInter,
+                                        color = Azul900)
+                            }
                             Surface(
                                 color = if (estado.servicioEnCurso) ColorExito.copy(alpha = .15f)
                                         else Azul700.copy(alpha = .12f),
@@ -174,6 +180,28 @@ fun PantallaInicio(
                                 )
                             }
                         }
+                        // Tipo de transporte
+                        servicio.tipoServicio?.takeIf { it.isNotBlank() }?.let { tipo ->
+                            FilaIconoTexto(Icons.Default.LocalShipping, "Tipo de transporte",
+                                tipo, Azul700)
+                        }
+                        // Fecha de inicio
+                        servicio.fechaServicio?.takeIf { it.isNotBlank() }?.let { fecha ->
+                            FilaIconoTexto(Icons.Default.CalendarToday, "Fecha de inicio",
+                                fecha, Azul700)
+                        }
+                        // Cliente
+                        servicio.clienteNombre?.takeIf { it.isNotBlank() }?.let { nombre ->
+                            HorizontalDivider(color = Azul50)
+                            val textoCliente = buildString {
+                                append(nombre)
+                                servicio.clienteRut?.takeIf { it.isNotBlank() }?.let {
+                                    append("\nRUT: $it")
+                                }
+                            }
+                            FilaIconoTexto(Icons.Default.Business, "Cliente", textoCliente, Azul700)
+                        }
+                        HorizontalDivider(color = Azul50)
                         FilaIconoTexto(Icons.Default.TripOrigin, "Origen", servicio.origen, Azul700)
                         FilaIconoTexto(Icons.Default.Place, "Destino", servicio.destino,
                             MaterialTheme.colorScheme.error)
@@ -307,7 +335,7 @@ private fun TarjetaEstadoGps(ultimaUbicacion: UltimaUbicacion?) {
                 Column(Modifier.weight(1f)) {
                     Text("GPS activo", fontWeight = FontWeight.SemiBold,
                         fontFamily = FuenteInter, color = ColorExito)
-                    Text("Intervalo: 30 s (modo debug)",
+                    Text("Intervalo de envío: 60 s",
                         fontSize = 11.sp, fontFamily = FuenteInter,
                         color = ColorExito.copy(alpha = .7f))
                 }

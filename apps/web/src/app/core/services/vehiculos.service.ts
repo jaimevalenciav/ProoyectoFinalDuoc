@@ -47,4 +47,5 @@ export class VehiculosService {
     const params = new HttpParams().set('vehiculoId', vehiculoId).set('desde', desde).set('hasta', hasta);
     return this.http.get<any[]>(`${this.gpsBase}/recorrido`, { params });
   }
+
 }

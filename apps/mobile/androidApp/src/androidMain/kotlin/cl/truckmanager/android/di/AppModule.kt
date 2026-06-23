@@ -14,7 +14,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
-private const val URL_BFF = "http://localhost:8080/api/v1"  // túnel USB vía adb reverse
+private const val URL_BFF = "https://bff-movil.yellowbeach-1e78632e.eastus.azurecontainerapps.io/api/v1"
 
 val moduloApp = module {
     single { GestorAutenticacion(androidContext()) }

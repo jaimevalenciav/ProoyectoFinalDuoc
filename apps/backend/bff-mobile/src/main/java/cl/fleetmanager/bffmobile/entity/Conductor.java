@@ -20,6 +20,9 @@ public class Conductor {
     @Column(name = "EMAIL", length = 150)
     private String email;
 
+    @Column(name = "AZURE_OID", length = 36)
+    private String azureOid;
+
     @Column(name = "ESTADO", length = 20)
     private String estado;
 
