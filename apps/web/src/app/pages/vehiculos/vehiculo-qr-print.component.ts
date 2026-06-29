@@ -32,7 +32,7 @@ export interface VehiculoQrData { vehiculo: Vehiculo; }
 
       <!-- Logo / encabezado empresa -->
       <div class="hoja-encabezado">
-        <div class="empresa-nombre">FleetManager Pro</div>
+        <div class="empresa-nombre">TruckManager Pro</div>
         <div class="empresa-sub">Identificación de vehículo</div>
       </div>
 
@@ -52,7 +52,7 @@ export interface VehiculoQrData { vehiculo: Vehiculo; }
       <!-- Instrucción -->
       <div class="instruccion">
         <mat-icon class="ico-instruccion no-print">smartphone</mat-icon>
-        <p>Escanea este código con la app móvil FleetManager<br>para registrar el inicio de tu jornada en este vehículo.</p>
+        <p>Escanea este código con la app móvil TruckManager<br>para registrar el inicio de tu jornada en este vehículo.</p>
       </div>
 
       <!-- ID técnico (pequeño, para soporte) -->

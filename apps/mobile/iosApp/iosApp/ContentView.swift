@@ -6,7 +6,7 @@ struct ContentView: View {
         VStack(spacing: 20) {
             Text("🚛")
                 .font(.system(size: 56))
-            Text("FleetManager iOS")
+            Text("TruckManager iOS")
                 .font(.title)
                 .fontWeight(.bold)
                 .foregroundColor(.white)

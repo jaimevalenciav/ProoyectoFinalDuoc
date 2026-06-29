@@ -3,7 +3,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>cl.fleetmanager</groupId>
+  <groupId>cl.truckmanager</groupId>
   <artifactId>fn-gps-processor</artifactId>
   <version>1.0.0-SNAPSHOT</version>
 
@@ -47,7 +47,7 @@
         <version>${azure.functions.maven.plugin.version}</version>
         <configuration>
           <appName>fn-gps-processor</appName>
-          <resourceGroup>fleetmanager-rg</resourceGroup>
+          <resourceGroup>rg-truckmanager</resourceGroup>
           <region>eastus</region>
           <runtime><os>linux</os><javaVersion>21</javaVersion></runtime>
         </configuration>

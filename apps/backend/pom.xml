@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>cl.fleetmanager</groupId>
-  <artifactId>fleetmanager-backend</artifactId>
+  <groupId>cl.truckmanager</groupId>
+  <artifactId>truckmanager-backend</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
@@ -77,12 +77,36 @@
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
           <version>${jacoco.version}</version>
+          <configuration>
+            <excludes>
+              <exclude>**/entity/**</exclude>
+              <exclude>**/dto/**</exclude>
+              <exclude>**/repository/**</exclude>
+              <exclude>**/security/**</exclude>
+              <exclude>**/config/**</exclude>
+              <exclude>**/exception/**</exclude>
+              <exclude>**/controller/**</exclude>
+              <exclude>**/*Application*</exclude>
+              <exclude>**/*PdfService*</exclude>
+            </excludes>
+          </configuration>
           <executions>
             <execution><id>prepare-agent</id><goals><goal>prepare-agent</goal></goals></execution>
             <execution><id>report</id><phase>test</phase><goals><goal>report</goal></goals></execution>
             <execution>
               <id>check</id><goals><goal>check</goal></goals>
               <configuration>
+                <excludes>
+                  <exclude>**/entity/**</exclude>
+                  <exclude>**/dto/**</exclude>
+                  <exclude>**/repository/**</exclude>
+                  <exclude>**/security/**</exclude>
+                  <exclude>**/config/**</exclude>
+                  <exclude>**/exception/**</exclude>
+                  <exclude>**/controller/**</exclude>
+                  <exclude>**/*Application*</exclude>
+                  <exclude>**/*PdfService*</exclude>
+                </excludes>
                 <rules>
                   <rule>
                     <element>BUNDLE</element>

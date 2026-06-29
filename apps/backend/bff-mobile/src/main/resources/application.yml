@@ -15,7 +15,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.OracleDialect
-        default_schema: ${ORACLE_ESQUEMA:FLEETMANAGER}
+        default_schema: ${ORACLE_ESQUEMA:ADMIN}
   security:
     oauth2:
       resourceserver:

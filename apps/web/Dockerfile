@@ -8,7 +8,7 @@ RUN npm run build -- --configuration production
 
 # ── Stage 2: serve ────────────────────────────────────────────────────────────
 FROM nginx:alpine
-COPY --from=builder /app/dist/fleetmanager-web/browser /usr/share/nginx/html
+COPY --from=builder /app/dist/truckmanager-web/browser /usr/share/nginx/html
 # nginx:alpine procesa automáticamente /etc/nginx/templates/*.template con envsubst
 # BFF_HOST se inyecta como variable de entorno en el Container App (ej: "bff-web")
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
