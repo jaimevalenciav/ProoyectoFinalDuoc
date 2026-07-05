@@ -1,10 +1,17 @@
 -- ============================================================
---  FleetManager Pro — DDL Oracle
---  Esquema: FLEETMANAGER
---  Generado desde entidades JPA de todos los microservicios
+--  TruckManager Pro — DDL Oracle (legado / referencia)
+--  Esquema: ADMIN  (usuario Oracle Autonomous Database)
+--
+--  NOTA: Este archivo es una versión de referencia generada
+--  desde las entidades JPA. El DDL de producción está en:
+--    database/oracle/01_schema.sql  (tablas base)
+--    database/oracle/02_indexes.sql (índices)
+--    database/oracle/03_seed.sql    (datos iniciales)
+--    database/oracle/04_operaciones.sql
+--    database/oracle/05_admin_almacen.sql
+--
+--  Ejecutar conectado al usuario ADMIN de Oracle ADB.
 -- ============================================================
-
--- Ejecutar conectado al usuario FLEETMANAGER (o como DBA con prefijo FLEETMANAGER.)
 
 -- ============================================================
 -- 1. USUARIOS_SISTEMA
@@ -579,6 +586,6 @@ CREATE INDEX IX_ACM_EMPRESA ON ALERTAS_COMBUSTIBLE (EMPRESA_ID, LEIDA);
 
 -- Empresa de demostración
 INSERT INTO USUARIOS_SISTEMA (ID, EMPRESA_ID, AZURE_OID, NOMBRE, EMAIL, ROL, ACTIVO)
-VALUES ('USR-ADMIN-001', 'EMP-001', 'demo-oid-001', 'Administrador Demo', 'admin@fleetmanager.cl', 'ADMIN', 1);
+VALUES ('USR-ADMIN-001', 'EMP-001', 'demo-oid-001', 'Administrador Demo', 'admin@truckmanager.cl', 'ADMIN', 1);
 
 COMMIT;
