@@ -61,29 +61,52 @@ public class VehiculoController {
     }
 
     private Vehiculo resolverVehiculoDesdeQr(String qrCode) {
-        // 1. Intentar parsear como JSON → extraer campo "id"
+        // 1. Si el QR es JSON, extraer el campo "id"
+        String vehiculoId = null;
         if (qrCode != null && qrCode.trim().startsWith("{")) {
             try {
                 JsonNode node = objectMapper.readTree(qrCode);
                 if (node.has("id")) {
-                    String vehiculoId = node.get("id").asText();
-                    log.info("QR JSON detectado → buscando vehiculo por id: {}", vehiculoId);
-                    var porId = vehiculoRepository.findById(vehiculoId);
-                    if (porId.isPresent()) return porId.get();
+                    vehiculoId = node.get("id").asText();
+                    log.info("QR JSON detectado, vehiculoId extraido: [{}]", vehiculoId);
+                } else {
+                    log.warn("QR JSON sin campo 'id': {}", qrCode);
                 }
             } catch (Exception e) {
-                log.warn("No se pudo parsear QR como JSON: {}", e.getMessage());
+                log.warn("QR no es JSON valido: {}", e.getMessage());
             }
         }
 
-        // 2. Buscar por columna QR_CODE (string exacto)
-        var porQr = vehiculoRepository.findByQrCode(qrCode);
-        if (porQr.isPresent()) return porQr.get();
+        // 2. Buscar por id extraído del JSON
+        if (vehiculoId != null && !vehiculoId.isBlank()) {
+            try {
+                var porId = vehiculoRepository.findById(vehiculoId);
+                if (porId.isPresent()) {
+                    log.info("Vehiculo encontrado por id: {}", vehiculoId);
+                    return porId.get();
+                }
+                log.warn("findById({}) retorno vacio, buscando por QR_CODE", vehiculoId);
+            } catch (Exception e) {
+                log.error("Error buscando vehiculo por id [{}]: {}", vehiculoId, e.getMessage());
+            }
+        }
 
-        // 3. Último intento: tratar el qrCode como vehiculoId directo
+        // 3. Buscar por columna QR_CODE (string exacto del QR)
+        try {
+            var porQr = vehiculoRepository.findByQrCode(qrCode);
+            if (porQr.isPresent()) {
+                log.info("Vehiculo encontrado por QR_CODE");
+                return porQr.get();
+            }
+        } catch (Exception e) {
+            log.error("Error buscando por QR_CODE: {}", e.getMessage());
+        }
+
+        // 4. Último intento: qrCode como vehiculoId directo
+        log.warn("Ultimo intento: buscar vehiculo por id directo [{}]", qrCode);
         return vehiculoRepository.findById(qrCode)
                 .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
                         org.springframework.http.HttpStatus.NOT_FOUND,
-                        "QR no válido o vehículo no encontrado: " + qrCode));
+                        "QR no valido o vehiculo no encontrado"));
     }
 }

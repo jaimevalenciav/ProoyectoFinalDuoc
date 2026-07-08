@@ -10,12 +10,14 @@ spring:
     password: ${ORACLE_CLAVE}
     driver-class-name: oracle.jdbc.OracleDriver
   jpa:
+    show-sql: true
     hibernate:
       ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.OracleDialect
         default_schema: ${ORACLE_ESQUEMA:ADMIN}
+        format_sql: true
   security:
     oauth2:
       resourceserver:
@@ -23,6 +25,11 @@ spring:
           # Solo jwk-set-uri: valida firma sin verificar el issuer
           # (el issuer de B2C varía según el tenant ID, no el nombre)
           jwk-set-uri: https://trackmanager.b2clogin.com/trackmanager.onmicrosoft.com/discovery/v2.0/keys?p=B2C_1_susi
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
 
 azure:
   bus-servicio:

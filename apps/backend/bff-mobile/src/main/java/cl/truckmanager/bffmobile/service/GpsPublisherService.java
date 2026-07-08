@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -21,6 +22,7 @@ public class GpsPublisherService {
 
     private final ObjectMapper mapeadorJson;
 
+    @Async
     public void publicar(GpsTrackRequest solicitud) {
         try (ServiceBusSenderClient emisor = new ServiceBusClientBuilder()
                 .connectionString(cadenaConexion)
