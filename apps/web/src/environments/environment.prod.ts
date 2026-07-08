@@ -6,8 +6,8 @@ export const environment = {
       clientId: '9c042f66-5b72-4dcf-9f65-7fd1bf196bb6',
       authority: 'https://trackmanager.b2clogin.com/trackmanager.onmicrosoft.com/B2C_1_susi',
       knownAuthorities: ['trackmanager.b2clogin.com'],
-      redirectUri: 'https://web.yellowbeach-1e78632e.eastus.azurecontainerapps.io',
-      postLogoutRedirectUri: 'https://web.yellowbeach-1e78632e.eastus.azurecontainerapps.io/login',
+      redirectUri: 'https://web.greenwater-e373a369.eastus2.azurecontainerapps.io',
+      postLogoutRedirectUri: 'https://web.greenwater-e373a369.eastus2.azurecontainerapps.io/login',
     },
     cache: {
       cacheLocation: 'localStorage',

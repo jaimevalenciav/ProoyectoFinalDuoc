@@ -15,4 +15,5 @@ COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 EXPOSE 80
 # Valor por defecto para desarrollo local con docker-compose
 ENV BFF_HOST=bff-web:8080
+ENV BFF_PROTOCOL=http
 CMD ["nginx", "-g", "daemon off;"]

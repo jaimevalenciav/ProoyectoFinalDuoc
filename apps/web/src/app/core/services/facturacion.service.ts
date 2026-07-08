@@ -34,4 +34,8 @@ export class FacturacionService {
   anular(id: string): Observable<Factura> {
     return this.http.post<Factura>(`${this.base}/${id}/anular`, {});
   }
+
+  descargarPdf(id: string): Observable<Blob> {
+    return this.http.get(`${this.base}/${id}/pdf`, { responseType: 'blob' });
+  }
 }

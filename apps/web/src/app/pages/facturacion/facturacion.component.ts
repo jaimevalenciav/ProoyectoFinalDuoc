@@ -46,7 +46,7 @@ import { Servicio, Cliente, Factura } from '@core/models';
         <button class="tab-btn" [class.activo]="pestanaActiva() === 'servicios'" (click)="pestanaActiva.set('servicios')">
           <mat-icon>local_shipping</mat-icon> Servicios
         </button>
-        <button class="tab-btn" [class.activo]="pestanaActiva() === 'facturas'" (click)="pestanaActiva.set('facturas')">
+        <button class="tab-btn" [class.activo]="pestanaActiva() === 'facturas'" (click)="pestanaActiva.set('facturas'); cargarFacturas()">
           <mat-icon>receipt</mat-icon> Facturas emitidas
         </button>
       </div>
@@ -650,7 +650,20 @@ export class FacturacionComponent implements OnInit {
 
   // ── PDF ───────────────────────────────────────────────────
   verPdf(facturaId: string): void {
-    window.open(`${environment.apiUrl}/facturas/${facturaId}/pdf`, '_blank');
+    this.facturacionSvc.descargarPdf(facturaId).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 30000);
+      },
+      error: () => this.snack.open('No se pudo cargar el PDF', '', { duration: 3000 }),
+    });
   }
 
   // ── Anular factura ────────────────────────────────────────
