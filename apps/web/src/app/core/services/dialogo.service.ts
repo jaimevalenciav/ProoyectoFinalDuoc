@@ -23,6 +23,24 @@ export class DialogoService {
     return result.isConfirmed;
   }
 
+  /** Diálogo de confirmación de desactivación (botón rojo, texto "Sí, desactivar") */
+  async confirmarDesactivar(mensaje: string, detalle?: string): Promise<boolean> {
+    const result = await Swal.fire({
+      title: mensaje,
+      text: detalle,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, desactivar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#C10A5A',
+      cancelButtonColor: '#1B2C40',
+      reverseButtons: true,
+      focusCancel: true,
+      customClass: { popup: 'swal-flota' },
+    });
+    return result.isConfirmed;
+  }
+
   /** Diálogo de confirmación genérica (botón naranja) */
   async confirmar(titulo: string, texto?: string, botonOk = 'Confirmar'): Promise<boolean> {
     const result = await Swal.fire({

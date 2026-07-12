@@ -446,7 +446,7 @@ export class ConductoresComponent implements OnInit {
     this.servicio.getAll({
       search: this.busqueda || undefined,
       estado: this.filtroEstado || undefined,
-      soloActivos: this.mostrarTodos ? undefined : true,
+      soloActivos: this.mostrarTodos ? false : true,
     }).subscribe({
       next: r => { this.conductores.set(r.content); this.cargando.set(false); },
       error: () => this.cargando.set(false),
@@ -500,7 +500,7 @@ export class ConductoresComponent implements OnInit {
   }
 
   async desactivar(c: Conductor) {
-    const ok = await this.dialogo.confirmarEliminar(
+    const ok = await this.dialogo.confirmarDesactivar(
       `¿Desactivar conductor ${c.nombre}?`,
       'El conductor quedará inactivo y no aparecerá en las listas por defecto.'
     );

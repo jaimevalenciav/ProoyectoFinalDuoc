@@ -944,7 +944,7 @@ export class VehiculosComponent implements OnInit {
     this.servicio.getAll({
       search: this.busqueda || undefined,
       estado: this.filtroEstado || undefined,
-      soloActivos: this.mostrarTodos ? undefined : true,
+      soloActivos: this.mostrarTodos ? false : true,
     }).subscribe({
       next: r => { this.vehiculos.set(r.content); this.cargando.set(false); },
       error: ()  => this.cargando.set(false),
@@ -1110,7 +1110,7 @@ export class VehiculosComponent implements OnInit {
   }
 
   async desactivar(v: Vehiculo) {
-    const ok = await this.dialogo.confirmarEliminar(
+    const ok = await this.dialogo.confirmarDesactivar(
       `¿Desactivar el vehículo ${v.patente}?`,
       `${v.marca} ${v.modelo} · ${v.anio}`
     );

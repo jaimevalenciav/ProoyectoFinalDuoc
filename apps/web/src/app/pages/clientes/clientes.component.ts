@@ -239,7 +239,7 @@ export class ClientesComponent implements OnInit {
     this.cargando.set(true);
     this.servicio.getClientes(
       this.busqueda || undefined,
-      this.mostrarTodos ? undefined : true,
+      this.mostrarTodos ? false : true,
     ).subscribe({
       next: r => { this.clientes.set(r.content); this.cargando.set(false); },
       error: () => this.cargando.set(false),
@@ -274,7 +274,7 @@ export class ClientesComponent implements OnInit {
   }
 
   async desactivar(c: Cliente) {
-    const ok = await this.dialogo.confirmarEliminar(
+    const ok = await this.dialogo.confirmarDesactivar(
       `¿Desactivar cliente ${c.razonSocial}?`,
       `RUT: ${c.rut}`
     );
