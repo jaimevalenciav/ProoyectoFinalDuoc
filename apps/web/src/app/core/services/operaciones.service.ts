@@ -121,9 +121,11 @@ export class OperacionesService {
   }
 
   // ── Clientes ──────────────────────────────────────────────
-  getClientes(search?: string): Observable<PagedResponse<Cliente>> {
-    const params = search ? new HttpParams().set('search', search) : undefined;
-    return this.http.get<PagedResponse<Cliente>>(`${this.urlBase}/clientes`, { params });
+  getClientes(search?: string, soloActivos?: boolean): Observable<PagedResponse<Cliente>> {
+    let p = new HttpParams();
+    if (search) p = p.set('search', search);
+    if (soloActivos !== undefined) p = p.set('soloActivos', String(soloActivos));
+    return this.http.get<PagedResponse<Cliente>>(`${this.urlBase}/clientes`, { params: p });
   }
 
   getClienteById(id: string): Observable<Cliente> {
@@ -140,6 +142,16 @@ export class OperacionesService {
 
   deleteCliente(id: string): Observable<void> {
     return this.http.delete<void>(`${this.urlBase}/clientes/${id}`);
+  }
+
+  /** Desactiva el cliente (activo=false). Backend debe implementar PATCH /clientes/{id}/desactivar */
+  desactivarCliente(id: string): Observable<Cliente> {
+    return this.http.patch<Cliente>(`${this.urlBase}/clientes/${id}/desactivar`, {});
+  }
+
+  /** Reactiva el cliente (activo=true). Backend debe implementar PATCH /clientes/{id}/reactivar */
+  reactivarCliente(id: string): Observable<Cliente> {
+    return this.http.patch<Cliente>(`${this.urlBase}/clientes/${id}/reactivar`, {});
   }
 
   getFacturacionCliente(id: string, desde?: string, hasta?: string): Observable<any> {

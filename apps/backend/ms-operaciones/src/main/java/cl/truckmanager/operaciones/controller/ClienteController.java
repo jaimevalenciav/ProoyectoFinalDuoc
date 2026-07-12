@@ -35,11 +35,12 @@ public class ClienteController {
     @GetMapping
     public Page<Cliente> obtenerTodos(
         @AuthenticationPrincipal Jwt jwt,
-        @RequestParam(required = false) String search,
-        @RequestParam(defaultValue = "0")  int pagina,
-        @RequestParam(defaultValue = "20") int tamano
+        @RequestParam(required = false)          String  search,
+        @RequestParam(defaultValue = "true") boolean soloActivos,
+        @RequestParam(defaultValue = "0")        int     pagina,
+        @RequestParam(defaultValue = "20")       int     tamano
     ) {
-        return servicio.getAll(empresaId(jwt), search, pagina, tamano);
+        return servicio.getAll(empresaId(jwt), search, soloActivos, pagina, tamano);
     }
 
     @GetMapping("/select")
@@ -61,5 +62,17 @@ public class ClienteController {
     @PutMapping("/{id}")
     public Cliente actualizar(@PathVariable String id, @RequestBody ClienteDto datos) {
         return servicio.actualizar(id, datos);
+    }
+
+    @PatchMapping("/{id}/desactivar")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void desactivar(@PathVariable String id) {
+        servicio.desactivar(id);
+    }
+
+    @PatchMapping("/{id}/reactivar")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void reactivar(@PathVariable String id) {
+        servicio.reactivar(id);
     }
 }

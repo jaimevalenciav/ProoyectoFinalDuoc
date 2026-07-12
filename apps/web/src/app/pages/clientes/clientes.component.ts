@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { OperacionesService } from '@core/services/operaciones.service';
 import { DialogoService } from '@core/services/dialogo.service';
 import { Cliente } from '@core/models';
@@ -20,6 +21,7 @@ import { rutValidator, procesarInputRut } from '@core/utils/rut.utils';
     CommonModule, FormsModule, ReactiveFormsModule,
     MatTableModule, MatButtonModule, MatIconModule,
     MatInputModule, MatProgressSpinnerModule, MatSnackBarModule, MatTooltipModule,
+    MatCheckboxModule,
   ],
   template: `
     <div class="encabezado-pagina">
@@ -35,6 +37,9 @@ import { rutValidator, procesarInputRut } from '@core/utils/rut.utils';
         <input matInput [(ngModel)]="busqueda" (ngModelChange)="cargar()" />
         <mat-icon matSuffix>search</mat-icon>
       </mat-form-field>
+      <mat-checkbox [(ngModel)]="mostrarTodos" (ngModelChange)="cargar()" color="primary">
+        Mostrar todos (activos e inactivos)
+      </mat-checkbox>
     </div>
 
     @if (cargando()) {
@@ -48,7 +53,12 @@ import { rutValidator, procesarInputRut } from '@core/utils/rut.utils';
           </ng-container>
           <ng-container matColumnDef="razonSocial">
             <th mat-header-cell *matHeaderCellDef>Razón social</th>
-            <td mat-cell *matCellDef="let c">{{ c.razonSocial }}</td>
+            <td mat-cell *matCellDef="let c">
+              {{ c.razonSocial }}
+              @if (!c.activo) {
+                <span class="badge-inactivo">Inactivo</span>
+              }
+            </td>
           </ng-container>
           <ng-container matColumnDef="repLegalNombre">
             <th mat-header-cell *matHeaderCellDef>Rep. legal</th>
@@ -71,13 +81,13 @@ import { rutValidator, procesarInputRut } from '@core/utils/rut.utils';
               <button mat-icon-button (click)="abrirFormulario(c)" matTooltip="Editar">
                 <mat-icon>edit</mat-icon>
               </button>
-              <button mat-icon-button color="warn" (click)="eliminar(c)" matTooltip="Eliminar">
-                <mat-icon>delete_outline</mat-icon>
+              <button mat-icon-button color="warn" (click)="desactivar(c)" matTooltip="Desactivar">
+                <mat-icon>block</mat-icon>
               </button>
             </td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="columnas"></tr>
-          <tr mat-row *matRowDef="let fila; columns: columnas;"></tr>
+          <tr mat-row *matRowDef="let fila; columns: columnas;" [class.fila-inactiva]="!fila.activo"></tr>
         </table>
         @if (clientes().length === 0) {
           <div class="estado-vacio-tabla">
@@ -163,6 +173,11 @@ import { rutValidator, procesarInputRut } from '@core/utils/rut.utils';
   `,
   styles: [`
     .columna-acciones { white-space: nowrap; }
+    .fila-inactiva { opacity: 0.5; }
+    .badge-inactivo {
+      font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+      background: #fee2e2; color: #991b1b; margin-left: 6px;
+    }
     .estado-vacio-tabla {
       display: flex; flex-direction: column; align-items: center; padding: 48px;
       gap: 8px; color: var(--color-texto-3);
@@ -192,6 +207,7 @@ export class ClientesComponent implements OnInit {
   clientes          = signal<Cliente[]>([]);
   datosFacturacion  = signal<any | null>(null);
   busqueda          = '';
+  mostrarTodos      = false;
 
   formulario = this.constructor_.group({
     rut:            ['', [Validators.required, rutValidator]],
@@ -221,7 +237,10 @@ export class ClientesComponent implements OnInit {
 
   cargar() {
     this.cargando.set(true);
-    this.servicio.getClientes(this.busqueda || undefined).subscribe({
+    this.servicio.getClientes(
+      this.busqueda || undefined,
+      this.mostrarTodos ? undefined : true,
+    ).subscribe({
       next: r => { this.clientes.set(r.content); this.cargando.set(false); },
       error: () => this.cargando.set(false),
     });
@@ -254,12 +273,12 @@ export class ClientesComponent implements OnInit {
     );
   }
 
-  async eliminar(c: Cliente) {
+  async desactivar(c: Cliente) {
     const ok = await this.dialogo.confirmarEliminar(
-      `¿Eliminar cliente ${c.razonSocial}?`,
+      `¿Desactivar cliente ${c.razonSocial}?`,
       `RUT: ${c.rut}`
     );
     if (!ok) return;
-    this.servicio.deleteCliente(c.id).subscribe({ next: () => this.cargar() });
+    this.servicio.desactivarCliente(c.id).subscribe({ next: () => this.cargar() });
   }
 }

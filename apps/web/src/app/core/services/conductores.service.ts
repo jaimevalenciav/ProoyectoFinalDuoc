@@ -9,10 +9,11 @@ export class ConductoresService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/conductores`;
 
-  getAll(params?: { estado?: string; search?: string }): Observable<PagedResponse<Conductor>> {
+  getAll(params?: { estado?: string; search?: string; soloActivos?: boolean }): Observable<PagedResponse<Conductor>> {
     let p = new HttpParams();
     if (params?.estado) p = p.set('estado', params.estado);
     if (params?.search) p = p.set('search', params.search);
+    if (params?.soloActivos !== undefined) p = p.set('soloActivos', String(params.soloActivos));
     return this.http.get<PagedResponse<Conductor>>(this.base, { params: p });
   }
 
@@ -30,6 +31,16 @@ export class ConductoresService {
 
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);
+  }
+
+  /** Desactiva el conductor (activo=0). Backend debe implementar PATCH /conductores/{id}/desactivar */
+  desactivar(id: string): Observable<Conductor> {
+    return this.http.patch<Conductor>(`${this.base}/${id}/desactivar`, {});
+  }
+
+  /** Reactiva el conductor (activo=1). Backend debe implementar PATCH /conductores/{id}/reactivar */
+  reactivar(id: string): Observable<Conductor> {
+    return this.http.patch<Conductor>(`${this.base}/${id}/reactivar`, {});
   }
 
   getScore(id: string): Observable<{ score: number; detalle: any }> {

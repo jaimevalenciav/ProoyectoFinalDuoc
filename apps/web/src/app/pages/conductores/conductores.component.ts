@@ -8,6 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { ConductoresService } from '@core/services/conductores.service';
 import { DialogoService } from '@core/services/dialogo.service';
 import { Conductor } from '@core/models';
@@ -22,6 +23,7 @@ const LS_DIAS = 'param_dias_vencimiento';
     CommonModule, FormsModule, ReactiveFormsModule,
     MatButtonModule, MatIconModule, MatInputModule,
     MatSelectModule, MatProgressSpinnerModule, MatSnackBarModule, MatTooltipModule,
+    MatCheckboxModule,
   ],
   template: `
     <div class="encabezado-pagina">
@@ -46,6 +48,9 @@ const LS_DIAS = 'param_dias_vencimiento';
           <mat-option value="VACACIONES">Vacaciones</mat-option>
         </mat-select>
       </mat-form-field>
+      <mat-checkbox [(ngModel)]="mostrarTodos" (ngModelChange)="cargar()" color="primary">
+        Mostrar todos (activos e inactivos)
+      </mat-checkbox>
     </div>
 
     @if (cargando()) {
@@ -53,7 +58,7 @@ const LS_DIAS = 'param_dias_vencimiento';
     } @else {
       <div class="cuadricula-conductores">
         @for (conductor of conductores(); track conductor.id) {
-          <div class="tarjeta-conductor superficie">
+          <div class="tarjeta-conductor superficie" [class.tarjeta-inactiva]="conductor.activo === 0">
             <div class="cabecera-tarjeta">
               <!-- Avatar / Foto -->
               @if (conductor.fotoBase64) {
@@ -66,6 +71,9 @@ const LS_DIAS = 'param_dias_vencimiento';
                 <div class="rut-conductor texto-atenuado">{{ conductor.rut }}</div>
               </div>
               <span [class]="insigniaEstado(conductor.estado)">{{ conductor.estado }}</span>
+              @if (conductor.activo === 0) {
+                <span class="badge-inactivo-conductor">Inactivo</span>
+              }
             </div>
 
             <div class="detalles-tarjeta">
@@ -110,8 +118,8 @@ const LS_DIAS = 'param_dias_vencimiento';
               <button mat-button (click)="abrirFormulario(conductor)" style="color:var(--azul-600)">
                 <mat-icon>edit</mat-icon> Editar
               </button>
-              <button mat-button color="warn" (click)="eliminar(conductor)">
-                <mat-icon>delete_outline</mat-icon> Eliminar
+              <button mat-button color="warn" (click)="desactivar(conductor)">
+                <mat-icon>person_off</mat-icon> Desactivar
               </button>
             </div>
           </div>
@@ -273,6 +281,11 @@ const LS_DIAS = 'param_dias_vencimiento';
       gap: 16px;
     }
     .tarjeta-conductor { display: flex; flex-direction: column; gap: 12px; }
+    .tarjeta-inactiva { opacity: 0.5; }
+    .badge-inactivo-conductor {
+      font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+      background: #fee2e2; color: #991b1b; white-space: nowrap;
+    }
     .cabecera-tarjeta { display: flex; align-items: center; gap: 12px; }
     .avatar {
       width: 48px; height: 48px; border-radius: 50%;
@@ -385,6 +398,7 @@ export class ConductoresComponent implements OnInit {
   conductores       = signal<Conductor[]>([]);
   busqueda          = '';
   filtroEstado      = '';
+  mostrarTodos      = false;
 
   // Previews de imágenes
   fotoPreview            = signal<string | null>(null);
@@ -429,7 +443,11 @@ export class ConductoresComponent implements OnInit {
 
   cargar() {
     this.cargando.set(true);
-    this.servicio.getAll({ search: this.busqueda || undefined, estado: this.filtroEstado || undefined }).subscribe({
+    this.servicio.getAll({
+      search: this.busqueda || undefined,
+      estado: this.filtroEstado || undefined,
+      soloActivos: this.mostrarTodos ? undefined : true,
+    }).subscribe({
       next: r => { this.conductores.set(r.content); this.cargando.set(false); },
       error: () => this.cargando.set(false),
     });
@@ -481,13 +499,13 @@ export class ConductoresComponent implements OnInit {
     });
   }
 
-  async eliminar(c: Conductor) {
+  async desactivar(c: Conductor) {
     const ok = await this.dialogo.confirmarEliminar(
-      `¿Eliminar conductor ${c.nombre}?`,
-      'Esta acción no se puede deshacer.'
+      `¿Desactivar conductor ${c.nombre}?`,
+      'El conductor quedará inactivo y no aparecerá en las listas por defecto.'
     );
     if (!ok) return;
-    this.servicio.delete(c.id).subscribe({ next: () => this.cargar() });
+    this.servicio.desactivar(c.id).subscribe({ next: () => this.cargar() });
   }
 
   // ── Manejo de imágenes ──────────────────────────────────────

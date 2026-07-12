@@ -22,9 +22,10 @@ public class ConductorService {
     private final ConductorRepository repositorio;
 
     public Page<Conductor> obtenerTodos(
-            String empresaId, String estado, String busqueda, int pagina, int tamano) {
+            String empresaId, String estado, String busqueda, boolean soloActivos, int pagina, int tamano) {
         return repositorio.buscarPorFiltros(
             empresaId,
+            soloActivos,
             (estado   != null && !estado.isBlank())   ? estado   : null,
             (busqueda != null && !busqueda.isBlank())  ? busqueda : null,
             PageRequest.of(pagina, tamano, Sort.by("nombre"))
@@ -80,6 +81,20 @@ public class ConductorService {
     public void eliminar(String id, String empresaId) {
         Conductor c = obtenerPorId(id, empresaId);
         c.setEliminado(1);
+        repositorio.save(c);
+    }
+
+    public void desactivar(String id, String empresaId) {
+        Conductor c = repositorio.findByIdAndEmpresaId(id, empresaId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Conductor no encontrado"));
+        c.setEliminado(1);
+        repositorio.save(c);
+    }
+
+    public void reactivar(String id, String empresaId) {
+        Conductor c = repositorio.findByIdAndEmpresaId(id, empresaId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Conductor no encontrado"));
+        c.setEliminado(0);
         repositorio.save(c);
     }
 

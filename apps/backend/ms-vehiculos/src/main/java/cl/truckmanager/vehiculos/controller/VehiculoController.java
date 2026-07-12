@@ -43,10 +43,11 @@ public class VehiculoController {
         @AuthenticationPrincipal Jwt jwt,
         @RequestParam(required = false) String estado,
         @RequestParam(required = false) String busqueda,
+        @RequestParam(defaultValue = "true") boolean soloActivos,
         @RequestParam(defaultValue = "0")  int pagina,
         @RequestParam(defaultValue = "20") int tamano
     ) {
-        return servicio.obtenerTodos(empresaId(jwt), estado, busqueda, pagina, tamano);
+        return servicio.obtenerTodos(empresaId(jwt), estado, busqueda, soloActivos, pagina, tamano);
     }
 
     @GetMapping("/{id}")
@@ -111,5 +112,17 @@ public class VehiculoController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void eliminar(@AuthenticationPrincipal Jwt jwt, @PathVariable String id) {
         servicio.eliminar(id, empresaId(jwt));
+    }
+
+    @PatchMapping("/{id}/desactivar")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void desactivar(@AuthenticationPrincipal Jwt jwt, @PathVariable String id) {
+        servicio.desactivar(id, empresaId(jwt));
+    }
+
+    @PatchMapping("/{id}/reactivar")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void reactivar(@AuthenticationPrincipal Jwt jwt, @PathVariable String id) {
+        servicio.reactivar(id, empresaId(jwt));
     }
 }

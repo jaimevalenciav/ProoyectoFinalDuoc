@@ -12,6 +12,8 @@ public interface ConductorRepository extends JpaRepository<Conductor, String> {
     /** Busca conductor validando empresa y que no esté eliminado — evita IDOR */
     java.util.Optional<Conductor> findByIdAndEmpresaIdAndEliminado(String id, String empresaId, Integer eliminado);
 
+    java.util.Optional<Conductor> findByIdAndEmpresaId(String id, String empresaId);
+
     java.util.Optional<Conductor> findByEmailAndEliminado(String email, Integer eliminado);
 
     java.util.Optional<Conductor> findByUsuarioIdAndEliminado(String usuarioId, Integer eliminado);
@@ -20,15 +22,16 @@ public interface ConductorRepository extends JpaRepository<Conductor, String> {
 
     @Query("SELECT c FROM Conductor c " +
            "WHERE c.empresaId = :empresaId " +
-           "AND c.eliminado = 0 " +
+           "AND (:soloActivos = false OR c.eliminado = 0) " +
            "AND (:estado IS NULL OR c.estado = :estado) " +
            "AND (:busqueda IS NULL " +
            "     OR LOWER(c.nombre) LIKE LOWER(CONCAT('%',:busqueda,'%')) " +
            "     OR LOWER(c.rut)    LIKE LOWER(CONCAT('%',:busqueda,'%')))")
     Page<Conductor> buscarPorFiltros(
-        @Param("empresaId") String empresaId,
-        @Param("estado")    String estado,
-        @Param("busqueda")  String busqueda,
+        @Param("empresaId")   String empresaId,
+        @Param("soloActivos") boolean soloActivos,
+        @Param("estado")      String estado,
+        @Param("busqueda")    String busqueda,
         Pageable pageable
     );
 }

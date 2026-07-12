@@ -59,36 +59,36 @@ class VehiculoServiceTest {
     @DisplayName("obtenerTodos devuelve pagina filtrada por empresa")
     void obtenerTodos_devuelveResultados() {
         Page<Vehiculo> paginaEsperada = new PageImpl<>(List.of(vehiculoEjemplo));
-        when(repositorio.buscarPorFiltros(eq(EMPRESA_ID), isNull(), isNull(), any()))
+        when(repositorio.buscarPorFiltros(eq(EMPRESA_ID), eq(true), isNull(), isNull(), any()))
             .thenReturn(paginaEsperada);
 
-        Page<Vehiculo> resultado = servicio.obtenerTodos(EMPRESA_ID, null, null, 0, 20);
+        Page<Vehiculo> resultado = servicio.obtenerTodos(EMPRESA_ID, null, null, true, 0, 20);
 
         assertThat(resultado.getTotalElements()).isEqualTo(1);
         assertThat(resultado.getContent().get(0).getEmpresaId()).isEqualTo(EMPRESA_ID);
-        verify(repositorio).buscarPorFiltros(eq(EMPRESA_ID), isNull(), isNull(), any());
+        verify(repositorio).buscarPorFiltros(eq(EMPRESA_ID), eq(true), isNull(), isNull(), any());
     }
 
     @Test
     @DisplayName("obtenerTodos con estado y busqueda los pasa al repositorio")
     void obtenerTodos_conFiltros_pasaParametros() {
-        when(repositorio.buscarPorFiltros(eq(EMPRESA_ID), eq("OPERATIVO"), eq("Volvo"), any()))
+        when(repositorio.buscarPorFiltros(eq(EMPRESA_ID), eq(true), eq("OPERATIVO"), eq("Volvo"), any()))
             .thenReturn(new PageImpl<>(List.of(vehiculoEjemplo)));
 
-        servicio.obtenerTodos(EMPRESA_ID, "OPERATIVO", "Volvo", 0, 20);
+        servicio.obtenerTodos(EMPRESA_ID, "OPERATIVO", "Volvo", true, 0, 20);
 
-        verify(repositorio).buscarPorFiltros(eq(EMPRESA_ID), eq("OPERATIVO"), eq("Volvo"), any());
+        verify(repositorio).buscarPorFiltros(eq(EMPRESA_ID), eq(true), eq("OPERATIVO"), eq("Volvo"), any());
     }
 
     @Test
     @DisplayName("obtenerTodos con estado en blanco lo convierte a null")
     void obtenerTodos_estadoEnBlanco_pasaNull() {
-        when(repositorio.buscarPorFiltros(eq(EMPRESA_ID), isNull(), isNull(), any()))
+        when(repositorio.buscarPorFiltros(eq(EMPRESA_ID), eq(true), isNull(), isNull(), any()))
             .thenReturn(Page.empty());
 
-        servicio.obtenerTodos(EMPRESA_ID, "  ", "", 0, 20);
+        servicio.obtenerTodos(EMPRESA_ID, "  ", "", true, 0, 20);
 
-        verify(repositorio).buscarPorFiltros(eq(EMPRESA_ID), isNull(), isNull(), any());
+        verify(repositorio).buscarPorFiltros(eq(EMPRESA_ID), eq(true), isNull(), isNull(), any());
     }
 
     // ─── obtenerPorId (sin empresa) ──────────────────────────────────────────

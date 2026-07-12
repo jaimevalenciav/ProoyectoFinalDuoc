@@ -10,12 +10,13 @@ export class VehiculosService {
   private readonly base = `${environment.apiUrl}/vehiculos`;
   private readonly gpsBase = `${environment.apiUrl}/gps`;
 
-  getAll(params?: { estado?: string; search?: string; page?: number; size?: number }): Observable<PagedResponse<Vehiculo>> {
+  getAll(params?: { estado?: string; search?: string; page?: number; size?: number; soloActivos?: boolean }): Observable<PagedResponse<Vehiculo>> {
     let p = new HttpParams();
     if (params?.estado) p = p.set('estado', params.estado);
     if (params?.search) p = p.set('search', params.search);
     if (params?.page !== undefined) p = p.set('page', params.page);
     if (params?.size !== undefined) p = p.set('size', params.size ?? 20);
+    if (params?.soloActivos !== undefined) p = p.set('soloActivos', String(params.soloActivos));
     return this.http.get<PagedResponse<Vehiculo>>(this.base, { params: p });
   }
 
@@ -33,6 +34,16 @@ export class VehiculosService {
 
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);
+  }
+
+  /** Desactiva el vehículo (activo=0). Backend debe implementar PATCH /vehiculos/{id}/desactivar */
+  desactivar(id: string): Observable<Vehiculo> {
+    return this.http.patch<Vehiculo>(`${this.base}/${id}/desactivar`, {});
+  }
+
+  /** Reactiva el vehículo (activo=1). Backend debe implementar PATCH /vehiculos/{id}/reactivar */
+  reactivar(id: string): Observable<Vehiculo> {
+    return this.http.patch<Vehiculo>(`${this.base}/${id}/reactivar`, {});
   }
 
   getHistorial(id: string): Observable<any[]> {

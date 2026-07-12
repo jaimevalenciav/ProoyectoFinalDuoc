@@ -56,7 +56,7 @@ class ClienteServiceTest {
         when(repositorio.buscarPorFiltros(eq(EMPRESA_ID), eq(1), isNull(), any()))
             .thenReturn(new PageImpl<>(List.of(clienteEjemplo)));
 
-        Page<Cliente> resultado = servicio.getAll(EMPRESA_ID, null, 0, 20);
+        Page<Cliente> resultado = servicio.getAll(EMPRESA_ID, null, true, 0, 20);
 
         assertThat(resultado.getTotalElements()).isEqualTo(1);
         assertThat(resultado.getContent().get(0).getEmpresaId()).isEqualTo(EMPRESA_ID);
@@ -68,7 +68,7 @@ class ClienteServiceTest {
         when(repositorio.buscarPorFiltros(eq(EMPRESA_ID), eq(1), isNull(), any()))
             .thenReturn(Page.empty());
 
-        servicio.getAll(EMPRESA_ID, "  ", 0, 20);
+        servicio.getAll(EMPRESA_ID, "  ", true, 0, 20);
 
         verify(repositorio).buscarPorFiltros(eq(EMPRESA_ID), eq(1), isNull(), any());
     }

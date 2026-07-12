@@ -11,7 +11,8 @@ import java.util.List;
 
 public interface ClienteRepository extends JpaRepository<Cliente, String> {
 
-    @Query("SELECT c FROM Cliente c WHERE c.empresaId = :empresaId AND c.activo = :activo " +
+    @Query("SELECT c FROM Cliente c WHERE c.empresaId = :empresaId " +
+           "AND (:activo IS NULL OR c.activo = :activo) " +
            "AND (:search IS NULL OR UPPER(c.razonSocial) LIKE UPPER(CONCAT('%', CONCAT(:search, '%'))) " +
            "     OR UPPER(c.rut) LIKE UPPER(CONCAT('%', CONCAT(:search, '%'))))")
     Page<Cliente> buscarPorFiltros(

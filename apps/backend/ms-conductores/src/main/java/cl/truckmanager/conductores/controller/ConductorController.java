@@ -36,12 +36,13 @@ public class ConductorController {
     @GetMapping
     public Page<Conductor> obtenerTodos(
         @AuthenticationPrincipal Jwt jwt,
-        @RequestParam(required = false)          String estado,
-        @RequestParam(required = false)          String search,
-        @RequestParam(defaultValue = "0")  int   pagina,
-        @RequestParam(defaultValue = "50") int   tamano
+        @RequestParam(required = false)                  String estado,
+        @RequestParam(required = false)                  String search,
+        @RequestParam(defaultValue = "true")  boolean   soloActivos,
+        @RequestParam(defaultValue = "0")     int       pagina,
+        @RequestParam(defaultValue = "50")    int       tamano
     ) {
-        return servicio.obtenerTodos(empresaId(jwt), estado, search, pagina, tamano);
+        return servicio.obtenerTodos(empresaId(jwt), estado, search, soloActivos, pagina, tamano);
     }
 
     @GetMapping("/{id}")
@@ -77,5 +78,17 @@ public class ConductorController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void eliminar(@AuthenticationPrincipal Jwt jwt, @PathVariable String id) {
         servicio.eliminar(id, empresaId(jwt));
+    }
+
+    @PatchMapping("/{id}/desactivar")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void desactivar(@AuthenticationPrincipal Jwt jwt, @PathVariable String id) {
+        servicio.desactivar(id, empresaId(jwt));
+    }
+
+    @PatchMapping("/{id}/reactivar")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void reactivar(@AuthenticationPrincipal Jwt jwt, @PathVariable String id) {
+        servicio.reactivar(id, empresaId(jwt));
     }
 }

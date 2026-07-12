@@ -21,9 +21,10 @@ public class ClienteService {
 
     private final ClienteRepository repositorio;
 
-    public Page<Cliente> getAll(String empresaId, String search, int pagina, int tamano) {
+    public Page<Cliente> getAll(String empresaId, String search, boolean soloActivos, int pagina, int tamano) {
         return repositorio.buscarPorFiltros(
-            empresaId, 1,
+            empresaId,
+            soloActivos ? 1 : null,
             (search != null && !search.isBlank()) ? search : null,
             PageRequest.of(pagina, tamano, Sort.by(Sort.Direction.ASC, "razonSocial"))
         );
@@ -67,5 +68,17 @@ public class ClienteService {
         if (datos.getRepLegalRut()   != null) c.setRepLegalRut(datos.getRepLegalRut());
         if (datos.getActivo()        != null) c.setActivo(datos.getActivo());
         return repositorio.save(c);
+    }
+
+    public void desactivar(String id) {
+        Cliente c = getById(id);
+        c.setActivo(0);
+        repositorio.save(c);
+    }
+
+    public void reactivar(String id) {
+        Cliente c = getById(id);
+        c.setActivo(1);
+        repositorio.save(c);
     }
 }

@@ -20,9 +20,10 @@ public class VehiculoService {
 
     private final VehiculoRepository repositorio;
 
-    public Page<Vehiculo> obtenerTodos(String idEmpresa, String estado, String busqueda, int pagina, int tamano) {
+    public Page<Vehiculo> obtenerTodos(String idEmpresa, String estado, String busqueda, boolean soloActivos, int pagina, int tamano) {
         return repositorio.buscarPorFiltros(
             idEmpresa,
+            soloActivos,
             (estado   != null && !estado.isBlank())   ? estado   : null,
             (busqueda != null && !busqueda.isBlank()) ? busqueda : null,
             PageRequest.of(pagina, tamano, Sort.by("patente"))
@@ -111,6 +112,20 @@ public class VehiculoService {
     public void eliminar(String id, String empresaId) {
         Vehiculo v = obtenerPorId(id, empresaId);
         v.setEliminado(1);
+        repositorio.save(v);
+    }
+
+    public void desactivar(String id, String empresaId) {
+        Vehiculo v = repositorio.findByIdAndEmpresaId(id, empresaId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vehículo no encontrado"));
+        v.setEliminado(1);
+        repositorio.save(v);
+    }
+
+    public void reactivar(String id, String empresaId) {
+        Vehiculo v = repositorio.findByIdAndEmpresaId(id, empresaId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vehículo no encontrado"));
+        v.setEliminado(0);
         repositorio.save(v);
     }
 }

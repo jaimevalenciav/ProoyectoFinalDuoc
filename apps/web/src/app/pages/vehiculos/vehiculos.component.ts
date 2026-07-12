@@ -11,6 +11,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { forkJoin } from 'rxjs';
 import { VehiculosService } from '@core/services/vehiculos.service';
 import { VehiculosMaestrosService } from '@core/services/vehiculos-maestros.service';
@@ -31,7 +32,7 @@ import { VehiculoQrPrintComponent } from './vehiculo-qr-print.component';
     MatTableModule, MatButtonModule, MatIconModule,
     MatInputModule, MatSelectModule, MatProgressSpinnerModule,
     MatSnackBarModule, MatDialogModule, MatTooltipModule,
-    MatSlideToggleModule,
+    MatSlideToggleModule, MatCheckboxModule,
   ],
   template: `
     <div class="encabezado-pagina">
@@ -59,6 +60,9 @@ import { VehiculoQrPrintComponent } from './vehiculo-qr-print.component';
           <mat-option value="FUERA_SERVICIO">Fuera de servicio</mat-option>
         </mat-select>
       </mat-form-field>
+      <mat-checkbox [(ngModel)]="mostrarTodos" (ngModelChange)="cargar()" color="primary">
+        Mostrar todos (activos e inactivos)
+      </mat-checkbox>
     </div>
 
     @if (cargando()) {
@@ -68,7 +72,12 @@ import { VehiculoQrPrintComponent } from './vehiculo-qr-print.component';
         <table mat-table [dataSource]="vehiculos()">
           <ng-container matColumnDef="patente">
             <th mat-header-cell *matHeaderCellDef>Patente</th>
-            <td mat-cell *matCellDef="let v"><span class="celda-placa">{{ v.patente }}</span></td>
+            <td mat-cell *matCellDef="let v">
+              <span class="celda-placa">{{ v.patente }}</span>
+              @if (v.activo === 0) {
+                <span class="badge-inactivo">Inactivo</span>
+              }
+            </td>
           </ng-container>
           <ng-container matColumnDef="marcaModelo">
             <th mat-header-cell *matHeaderCellDef>Marca / Modelo</th>
@@ -123,8 +132,8 @@ import { VehiculoQrPrintComponent } from './vehiculo-qr-print.component';
                 <button mat-icon-button (click)="abrirFormulario(v)" matTooltip="Editar">
                   <mat-icon>edit</mat-icon>
                 </button>
-                <button mat-icon-button color="warn" (click)="eliminar(v)" matTooltip="Eliminar">
-                  <mat-icon>delete_outline</mat-icon>
+                <button mat-icon-button color="warn" (click)="desactivar(v)" matTooltip="Desactivar">
+                  <mat-icon>no_transfer</mat-icon>
                 </button>
               }
             </td>
@@ -132,6 +141,7 @@ import { VehiculoQrPrintComponent } from './vehiculo-qr-print.component';
           <tr mat-header-row *matHeaderRowDef="columnas"></tr>
           <tr mat-row *matRowDef="let fila; columns: columnas;"
               [class.fila-clickable]="puedeEscribir()"
+              [class.fila-inactiva]="fila.activo === 0"
               (click)="puedeEscribir() && abrirFormulario(fila)"></tr>
         </table>
         @if (vehiculos().length === 0) {
@@ -695,6 +705,11 @@ import { VehiculoQrPrintComponent } from './vehiculo-qr-print.component';
     .columna-acciones { white-space: nowrap; }
     .fila-clickable { cursor: pointer; }
     .fila-clickable:hover { background: var(--azul-50); }
+    .fila-inactiva { opacity: 0.5; }
+    .badge-inactivo {
+      font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+      background: #fee2e2; color: #991b1b; margin-left: 6px;
+    }
     .badge-condicion {
       font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
       background: #dcfce7; color: #166534; margin-left: 6px;
@@ -860,6 +875,7 @@ export class VehiculosComponent implements OnInit {
   // Filtros lista
   busqueda     = '';
   filtroEstado = '';
+  mostrarTodos = false;
 
   // Formulario vehículo
   formulario = this.constructor_.group({
@@ -925,11 +941,14 @@ export class VehiculosComponent implements OnInit {
 
   cargar() {
     this.cargando.set(true);
-    this.servicio.getAll({ search: this.busqueda || undefined, estado: this.filtroEstado || undefined })
-      .subscribe({
-        next: r => { this.vehiculos.set(r.content); this.cargando.set(false); },
-        error: ()  => this.cargando.set(false),
-      });
+    this.servicio.getAll({
+      search: this.busqueda || undefined,
+      estado: this.filtroEstado || undefined,
+      soloActivos: this.mostrarTodos ? undefined : true,
+    }).subscribe({
+      next: r => { this.vehiculos.set(r.content); this.cargando.set(false); },
+      error: ()  => this.cargando.set(false),
+    });
   }
 
   abrirFormulario(v?: Vehiculo) {
@@ -1090,13 +1109,13 @@ export class VehiculosComponent implements OnInit {
     });
   }
 
-  async eliminar(v: Vehiculo) {
+  async desactivar(v: Vehiculo) {
     const ok = await this.dialogo.confirmarEliminar(
-      `¿Eliminar el vehículo ${v.patente}?`,
+      `¿Desactivar el vehículo ${v.patente}?`,
       `${v.marca} ${v.modelo} · ${v.anio}`
     );
     if (!ok) return;
-    this.servicio.delete(v.id).subscribe({ next: () => this.cargar() });
+    this.servicio.desactivar(v.id).subscribe({ next: () => this.cargar() });
   }
 
   insigniaEstado(estado: string): string {

@@ -74,6 +74,7 @@ export interface Vehiculo {
   sucursalId?: string;
   usaAdBlue?: boolean;
   normaEuro?: string;
+  activo?: number;
   eliminado: boolean;
   createdAt: string;
   updatedAt: string;
@@ -115,6 +116,7 @@ export interface Conductor {
   horasMes: number;
   kmMes: number;
   infraccionesMes: number;
+  activo?: number;
   eliminado: boolean;
   createdAt: string;
 }
