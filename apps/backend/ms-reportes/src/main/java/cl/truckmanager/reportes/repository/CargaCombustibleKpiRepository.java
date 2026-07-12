@@ -54,4 +54,10 @@ public interface CargaCombustibleKpiRepository extends JpaRepository<CargaCombus
             @Param("emp") String emp,
             @Param("desde") LocalDate desde,
             @Param("hasta") LocalDate hasta);
+
+    @Query(value = "SELECT COALESCE(SUM(LITROS), 0) FROM CARGAS_COMBUSTIBLE WHERE EMPRESA_ID = :emp AND FECHA_CARGA BETWEEN :desde AND :hasta", nativeQuery = true)
+    double sumLitrosPeriodo(@Param("emp") String emp, @Param("desde") LocalDate desde, @Param("hasta") LocalDate hasta);
+
+    @Query(value = "SELECT COALESCE(SUM(COSTO_TOTAL), 0) FROM CARGAS_COMBUSTIBLE WHERE EMPRESA_ID = :emp AND FECHA_CARGA BETWEEN :desde AND :hasta", nativeQuery = true)
+    double sumCostoCombustiblePeriodo(@Param("emp") String emp, @Param("desde") LocalDate desde, @Param("hasta") LocalDate hasta);
 }

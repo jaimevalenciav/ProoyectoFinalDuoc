@@ -39,8 +39,13 @@ public class ReporteController {
     }
 
     @GetMapping("/kpis")
-    public KpiDashboardDto getKpis(@AuthenticationPrincipal Jwt jwt) {
-        return kpiService.getDashboard(empresaId(jwt));
+    public KpiDashboardDto getKpis(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
+        LocalDate d = desde != null ? desde : LocalDate.now().withDayOfMonth(1);
+        LocalDate h = hasta != null ? hasta : LocalDate.now();
+        return kpiService.getDashboard(empresaId(jwt), d, h);
     }
 
     // -------------------------------------------------------------------------

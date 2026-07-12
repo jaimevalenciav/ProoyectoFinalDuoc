@@ -28,4 +28,10 @@ public interface ServicioKpiRepository extends JpaRepository<ServicioKpi, String
             @Param("emp") String emp,
             @Param("desde") LocalDate desde,
             @Param("hasta") LocalDate hasta);
+
+    @Query(value = "SELECT COALESCE(SUM(VALOR_TOTAL), 0) FROM SERVICIOS WHERE EMPRESA_ID = :emp AND ELIMINADO = 0 AND FECHA_SERVICIO BETWEEN :desde AND :hasta", nativeQuery = true)
+    double sumIngresosPeriodo(@Param("emp") String emp, @Param("desde") LocalDate desde, @Param("hasta") LocalDate hasta);
+
+    @Query(value = "SELECT COALESCE(SUM(KMS_RECORRIDO), 0) FROM SERVICIOS WHERE EMPRESA_ID = :emp AND ELIMINADO = 0 AND FECHA_SERVICIO BETWEEN :desde AND :hasta", nativeQuery = true)
+    double sumKmRecorridosPeriodo(@Param("emp") String emp, @Param("desde") LocalDate desde, @Param("hasta") LocalDate hasta);
 }
