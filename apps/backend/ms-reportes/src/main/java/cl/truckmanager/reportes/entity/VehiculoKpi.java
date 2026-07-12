@@ -24,4 +24,7 @@ public class VehiculoKpi {
 
     @Column(name = "PATENTE", length = 10)
     private String patente;
+
+    @Column(name = "ELIMINADO")
+    private Integer eliminado;
 }

@@ -7,12 +7,12 @@ import org.springframework.data.repository.query.Param;
 
 public interface VehiculoKpiRepository extends JpaRepository<VehiculoKpi, String> {
 
-    @Query("SELECT COUNT(v) FROM VehiculoKpi v WHERE v.empresaId = :emp")
+    @Query("SELECT COUNT(v) FROM VehiculoKpi v WHERE v.empresaId = :emp AND v.eliminado = 0")
     long countVehiculos(@Param("emp") String emp);
 
-    @Query("SELECT COUNT(v) FROM VehiculoKpi v WHERE v.empresaId = :emp AND v.estado = 'OPERATIVO'")
+    @Query("SELECT COUNT(v) FROM VehiculoKpi v WHERE v.empresaId = :emp AND v.eliminado = 0 AND v.estado = 'OPERATIVO'")
     long countOperativos(@Param("emp") String emp);
 
-    @Query("SELECT COUNT(v) FROM VehiculoKpi v WHERE v.empresaId = :emp AND v.estado = 'EN_TALLER'")
+    @Query("SELECT COUNT(v) FROM VehiculoKpi v WHERE v.empresaId = :emp AND v.eliminado = 0 AND v.estado = 'EN_TALLER'")
     long countEnTaller(@Param("emp") String emp);
 }

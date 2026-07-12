@@ -25,4 +25,7 @@ public class ConductorKpi {
 
     @Column(name = "VENCIMIENTO_LICENCIA")
     private LocalDate vencimientoLicencia;
+
+    @Column(name = "ELIMINADO")
+    private Integer eliminado;
 }
