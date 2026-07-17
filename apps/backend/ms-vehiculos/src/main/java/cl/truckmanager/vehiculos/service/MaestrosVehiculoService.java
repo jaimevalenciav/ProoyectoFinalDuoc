@@ -41,6 +41,7 @@ public class MaestrosVehiculoService {
         if (dto.getNombre()    != null) s.setNombre(dto.getNombre());
         if (dto.getDireccion() != null) s.setDireccion(dto.getDireccion());
         if (dto.getCiudad()    != null) s.setCiudad(dto.getCiudad());
+        if (dto.getActiva()    != null) s.setActiva(dto.getActiva() ? 1 : 0);
         return sucursalRepo.save(s);
     }
 
@@ -70,6 +71,7 @@ public class MaestrosVehiculoService {
             .orElseThrow(() -> new EntityNotFoundException("Municipalidad no encontrada: " + id));
         if (dto.getNombre() != null) m.setNombre(dto.getNombre());
         if (dto.getRegion() != null) m.setRegion(dto.getRegion());
+        if (dto.getActiva() != null) m.setActiva(dto.getActiva() ? 1 : 0);
         return municipalidadRepo.save(m);
     }
 
@@ -99,6 +101,7 @@ public class MaestrosVehiculoService {
             .orElseThrow(() -> new EntityNotFoundException("Aseguradora no encontrada: " + id));
         if (dto.getNombre() != null) a.setNombre(dto.getNombre());
         if (dto.getRut()    != null) a.setRut(dto.getRut());
+        if (dto.getActiva() != null) a.setActiva(dto.getActiva() ? 1 : 0);
         return aseguradoraRepo.save(a);
     }
 
@@ -128,6 +131,7 @@ public class MaestrosVehiculoService {
             .orElseThrow(() -> new EntityNotFoundException("Planta no encontrada: " + id));
         if (dto.getNombre()    != null) p.setNombre(dto.getNombre());
         if (dto.getDireccion() != null) p.setDireccion(dto.getDireccion());
+        if (dto.getActiva()    != null) p.setActiva(dto.getActiva() ? 1 : 0);
         return plantaRepo.save(p);
     }
 

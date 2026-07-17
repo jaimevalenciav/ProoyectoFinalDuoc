@@ -60,7 +60,7 @@ class ConductorServiceTest {
     @Test
     @DisplayName("obtenerTodos devuelve pagina filtrada por empresa")
     void obtenerTodos_devuelveResultados() {
-        when(repositorio.buscarPorFiltros(eq(EMPRESA_ID), eq(true), isNull(), isNull(), any()))
+        when(repositorio.buscarPorFiltros(eq(EMPRESA_ID), eq(0), isNull(), isNull(), any()))
             .thenReturn(new PageImpl<>(List.of(conductorEjemplo)));
 
         Page<Conductor> resultado = servicio.obtenerTodos(EMPRESA_ID, null, null, true, 0, 50);
@@ -72,12 +72,12 @@ class ConductorServiceTest {
     @Test
     @DisplayName("obtenerTodos con estado en blanco pasa null al repositorio")
     void obtenerTodos_estadoEnBlanco_pasaNull() {
-        when(repositorio.buscarPorFiltros(eq(EMPRESA_ID), eq(true), isNull(), isNull(), any()))
+        when(repositorio.buscarPorFiltros(eq(EMPRESA_ID), eq(0), isNull(), isNull(), any()))
             .thenReturn(Page.empty());
 
         servicio.obtenerTodos(EMPRESA_ID, "  ", "  ", true, 0, 50);
 
-        verify(repositorio).buscarPorFiltros(eq(EMPRESA_ID), eq(true), isNull(), isNull(), any());
+        verify(repositorio).buscarPorFiltros(eq(EMPRESA_ID), eq(0), isNull(), isNull(), any());
     }
 
     // ─── obtenerPorId (sin empresa) ──────────────────────────────────────────

@@ -6,9 +6,11 @@ import cl.truckmanager.conductores.entity.UsuarioSistema;
 import cl.truckmanager.conductores.repository.UsuarioRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -45,6 +47,9 @@ public class UsuarioService {
         java.util.Optional<UsuarioSistema> existente = repo.findByAzureOid(azureOid);
         if (existente.isPresent()) {
             UsuarioSistema u = existente.get();
+            if (u.getActivo() != null && u.getActivo() == 0) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Usuario inactivo");
+            }
             boolean dirty = false;
             if (nombre != null && !nombre.equals(u.getNombre())) { u.setNombre(nombre); dirty = true; }
             if (email  != null && !email.equals(u.getEmail()))   { u.setEmail(email);   dirty = true; }

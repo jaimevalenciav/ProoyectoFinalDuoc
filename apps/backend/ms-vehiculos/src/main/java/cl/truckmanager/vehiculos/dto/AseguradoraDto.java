@@ -7,4 +7,5 @@ import lombok.Data;
 public class AseguradoraDto {
     @NotBlank String nombre;
     String rut;
+    Boolean activa;
 }

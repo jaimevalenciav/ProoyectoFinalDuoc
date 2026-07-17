@@ -8,4 +8,5 @@ public class SucursalDto {
     @NotBlank String nombre;
     String direccion;
     String ciudad;
+    Boolean activa;
 }

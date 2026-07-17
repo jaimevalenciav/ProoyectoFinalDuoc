@@ -7,6 +7,6 @@ import org.springframework.data.repository.query.Param;
 
 public interface ConductorKpiRepository extends JpaRepository<ConductorKpi, String> {
 
-    @Query("SELECT COUNT(c) FROM ConductorKpi c WHERE c.empresaId = :emp AND c.eliminado = 0")
+    @Query(value = "SELECT COUNT(*) FROM CONDUCTORES WHERE EMPRESA_ID = :emp AND ELIMINADO = 0", nativeQuery = true)
     long countConductores(@Param("emp") String emp);
 }

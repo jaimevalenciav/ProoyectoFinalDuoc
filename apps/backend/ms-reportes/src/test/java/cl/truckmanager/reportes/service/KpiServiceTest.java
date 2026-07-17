@@ -9,21 +9,38 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("KpiService — pruebas unitarias")
 class KpiServiceTest {
 
-    @Mock private VehiculoKpiRepository vehiculoRepo;
-    @Mock private OtKpiRepository       otRepo;
-    @Mock private ConductorKpiRepository conductorRepo;
-    @Mock private RepuestoKpiRepository  repuestoRepo;
+    @Mock private VehiculoKpiRepository          vehiculoRepo;
+    @Mock private OtKpiRepository                otRepo;
+    @Mock private ConductorKpiRepository         conductorRepo;
+    @Mock private RepuestoKpiRepository          repuestoRepo;
+    @Mock private CargaCombustibleKpiRepository  combustibleRepo;
+    @Mock private ServicioKpiRepository          servicioRepo;
 
     @InjectMocks private KpiService servicio;
 
-    private static final String EMP = "EMP-001";
+    private static final String    EMP   = "EMP-001";
+    private static final LocalDate DESDE = LocalDate.of(2026, 1, 1);
+    private static final LocalDate HASTA = LocalDate.of(2026, 12, 31);
+
+    private void mockPeriodo(long otsCerradas) {
+        when(otRepo.countOtsCerradasPeriodo(eq(EMP), any(LocalDate.class), any(LocalDate.class))).thenReturn(otsCerradas);
+        when(otRepo.sumCostoMantenimientoPeriodo(eq(EMP), any(LocalDate.class), any(LocalDate.class))).thenReturn(0.0);
+        when(combustibleRepo.sumLitrosPeriodo(eq(EMP), any(LocalDate.class), any(LocalDate.class))).thenReturn(0.0);
+        when(combustibleRepo.sumCostoCombustiblePeriodo(eq(EMP), any(LocalDate.class), any(LocalDate.class))).thenReturn(0.0);
+        when(servicioRepo.sumIngresosPeriodo(eq(EMP), any(LocalDate.class), any(LocalDate.class))).thenReturn(0.0);
+        when(servicioRepo.sumKmRecorridosPeriodo(eq(EMP), any(LocalDate.class), any(LocalDate.class))).thenReturn(0.0);
+    }
 
     @Test
     @DisplayName("getDashboard retorna KPI con todos los conteos correctos")
@@ -37,17 +54,18 @@ class KpiServiceTest {
         when(otRepo.countOtsCerradas(EMP)).thenReturn(6L);
         when(conductorRepo.countConductores(EMP)).thenReturn(8L);
         when(repuestoRepo.countBajoStock(EMP)).thenReturn(3L);
+        mockPeriodo(6L);
 
-        KpiDashboardDto resultado = servicio.getDashboard(EMP);
+        KpiDashboardDto resultado = servicio.getDashboard(EMP, DESDE, HASTA);
 
         assertThat(resultado.getTotalVehiculos()).isEqualTo(10L);
-        assertThat(resultado.getVehiculosOperativos()).isEqualTo(7L);
+        assertThat(resultado.getVehiculosActivos()).isEqualTo(7L);
         assertThat(resultado.getVehiculosEnTaller()).isEqualTo(2L);
         assertThat(resultado.getVehiculosFuera()).isEqualTo(1L);
         assertThat(resultado.getTotalOts()).isEqualTo(15L);
         assertThat(resultado.getOtsPendientes()).isEqualTo(5L);
         assertThat(resultado.getOtsEnEjecucion()).isEqualTo(4L);
-        assertThat(resultado.getOtsCerradas()).isEqualTo(6L);
+        assertThat(resultado.getOtCerradasMes()).isEqualTo(6L);
         assertThat(resultado.getTotalConductores()).isEqualTo(8L);
         assertThat(resultado.getAlertasBajoStock()).isEqualTo(3L);
     }
@@ -64,8 +82,9 @@ class KpiServiceTest {
         when(otRepo.countOtsCerradas(EMP)).thenReturn(0L);
         when(conductorRepo.countConductores(EMP)).thenReturn(0L);
         when(repuestoRepo.countBajoStock(EMP)).thenReturn(0L);
+        mockPeriodo(0L);
 
-        KpiDashboardDto resultado = servicio.getDashboard(EMP);
+        KpiDashboardDto resultado = servicio.getDashboard(EMP, DESDE, HASTA);
 
         assertThat(resultado.getVehiculosFuera()).isGreaterThanOrEqualTo(0L);
     }
@@ -82,8 +101,9 @@ class KpiServiceTest {
         when(otRepo.countOtsCerradas(EMP)).thenReturn(0L);
         when(conductorRepo.countConductores(EMP)).thenReturn(0L);
         when(repuestoRepo.countBajoStock(EMP)).thenReturn(0L);
+        mockPeriodo(0L);
 
-        KpiDashboardDto resultado = servicio.getDashboard(EMP);
+        KpiDashboardDto resultado = servicio.getDashboard(EMP, DESDE, HASTA);
 
         assertThat(resultado.getTotalVehiculos()).isZero();
         assertThat(resultado.getTotalOts()).isZero();

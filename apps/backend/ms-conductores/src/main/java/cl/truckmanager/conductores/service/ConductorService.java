@@ -25,7 +25,7 @@ public class ConductorService {
             String empresaId, String estado, String busqueda, boolean soloActivos, int pagina, int tamano) {
         return repositorio.buscarPorFiltros(
             empresaId,
-            soloActivos,
+            soloActivos ? 0 : null,
             (estado   != null && !estado.isBlank())   ? estado   : null,
             (busqueda != null && !busqueda.isBlank())  ? busqueda : null,
             PageRequest.of(pagina, tamano, Sort.by("nombre"))

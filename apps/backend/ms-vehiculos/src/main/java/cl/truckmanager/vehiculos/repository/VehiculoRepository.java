@@ -11,13 +11,13 @@ import java.util.Optional;
 public interface VehiculoRepository extends JpaRepository<Vehiculo, String> {
 
     @Query("SELECT v FROM Vehiculo v WHERE v.empresaId = :idEmpresa " +
-           "AND (:soloActivos = false OR v.eliminado = 0) " +
+           "AND (:eliminado IS NULL OR v.eliminado = :eliminado) " +
            "AND (:estado IS NULL OR v.estado = :estado) " +
            "AND (:busqueda IS NULL OR LOWER(v.patente) LIKE LOWER(CONCAT('%',:busqueda,'%')) " +
            "     OR LOWER(v.marca) LIKE LOWER(CONCAT('%',:busqueda,'%')))")
     Page<Vehiculo> buscarPorFiltros(
         @Param("idEmpresa") String idEmpresa,
-        @Param("soloActivos") boolean soloActivos,
+        @Param("eliminado") Integer eliminado,
         @Param("estado") String estado,
         @Param("busqueda") String busqueda,
         Pageable pageable

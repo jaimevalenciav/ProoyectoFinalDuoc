@@ -22,16 +22,16 @@ public interface ConductorRepository extends JpaRepository<Conductor, String> {
 
     @Query("SELECT c FROM Conductor c " +
            "WHERE c.empresaId = :empresaId " +
-           "AND (:soloActivos = false OR c.eliminado = 0) " +
+           "AND (:eliminado IS NULL OR c.eliminado = :eliminado) " +
            "AND (:estado IS NULL OR c.estado = :estado) " +
            "AND (:busqueda IS NULL " +
            "     OR LOWER(c.nombre) LIKE LOWER(CONCAT('%',:busqueda,'%')) " +
            "     OR LOWER(c.rut)    LIKE LOWER(CONCAT('%',:busqueda,'%')))")
     Page<Conductor> buscarPorFiltros(
-        @Param("empresaId")   String empresaId,
-        @Param("soloActivos") boolean soloActivos,
-        @Param("estado")      String estado,
-        @Param("busqueda")    String busqueda,
+        @Param("empresaId") String empresaId,
+        @Param("eliminado") Integer eliminado,
+        @Param("estado")    String estado,
+        @Param("busqueda")  String busqueda,
         Pageable pageable
     );
 }
